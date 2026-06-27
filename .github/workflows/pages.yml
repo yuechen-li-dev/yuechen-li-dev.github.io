@@ -31,12 +31,6 @@ jobs:
         with:
           version: v0.1.3
       
-      - name: Resolve dependencies
-        run: tspack update
-
-      - name: Sync dependencies
-        run: tspack sync
-
       - name: Sync dependencies
         run: tspack sync
 
