@@ -9,9 +9,23 @@ tspack update
 tspack sync
 tspack run dev
 tspack run build
+tspack run preview
 tspack check
 tspack check --format
 tspack update --policy --dry-run
+```
+
+## Deployment
+
+Pushes to `main` deploy the site to GitHub Pages through `.github/workflows/pages.yml`.
+
+The workflow uses the committed `ts-lock.toml` and runs:
+
+```sh
+tspack sync
+tspack check
+tspack check --format
+tspack run build
 ```
 
 ## Notes
