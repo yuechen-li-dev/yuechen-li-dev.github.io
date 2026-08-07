@@ -47,7 +47,7 @@ const deps = defineDeps({
   react: dep(npm("react", "^19.0.0")),
   reactDom: dep(npm("react-dom", "^19.0.0"), { key: "react-dom" }),
   typescript: tool(npm("typescript", "^5.0.0")),
-  vite: tool(npm("vite", "^5.0.0")),
+  vite: tool(npm("vite", "^6.4.3")),
   viteReact: tool(npm("@vitejs/plugin-react", "^4.0.0"), {
     key: "@vitejs/plugin-react",
   }),

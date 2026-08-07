@@ -17,6 +17,7 @@ tspack run docs-check
 tspack run typecheck
 tspack check
 tspack check --format
+tspack audit
 tspack update --policy --dry-run
 ```
 
@@ -25,6 +26,7 @@ tspack update --policy --dry-run
 - `manifest.tsx` is the project contract.
 - `package.json`, `tsconfig.json`, and `vite.config.ts` are compatibility/tooling projections.
 - Lifecycle scripts are blocked by default.
+- `tspack audit` checks the exact locked npm versions against OSV.dev and is a required deployment gate.
 - `tspack run docs-sync` refreshes the hash-tied capability snapshot from a
   sibling `Aetheris` checkout and verifies every advertised fixture.
 - `tspack run docs-check` validates stable routes, fixture attribution,

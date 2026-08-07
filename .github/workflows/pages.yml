@@ -27,12 +27,15 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Setup TSPack
-        uses: yuechen-li-dev/tspack/.github/actions/setup-tspack@v0.1.7
+        uses: yuechen-li-dev/tspack/.github/actions/setup-tspack@v0.1.8
         with:
-          version: v0.1.7
+          version: v0.1.8
       
       - name: Sync dependencies
         run: tspack sync
+
+      - name: Audit locked dependencies
+        run: tspack audit
 
       - name: Check project
         run: tspack check
