@@ -27,9 +27,9 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Setup TSPack
-        uses: yuechen-li-dev/tspack/.github/actions/setup-tspack@v0.1.4
+        uses: yuechen-li-dev/tspack/.github/actions/setup-tspack@v0.1.7
         with:
-          version: v0.1.4
+          version: v0.1.7
       
       - name: Sync dependencies
         run: tspack sync
