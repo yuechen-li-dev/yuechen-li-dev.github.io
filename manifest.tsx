@@ -1,20 +1,34 @@
 import {
+  CompatFiles,
   define,
   defineDeps,
   dep,
+  JsonFile,
   npm,
   Package,
   Policies,
   RunTargets,
   Security,
   Targets,
+  TsConfig,
   tool,
   Tools,
   UpdatePolicy,
+  VSCode,
   Workspace,
   type BoundaryPolicy,
   type TypePolicy,
 } from "tspack/manifest";
+
+// Generated from concept fragments:
+// - browser.spa
+// - react.app
+// - tspack.manifestBoundary
+// - tspack.securityPolicy
+// - tspack.updatePolicy
+// - tspack.workspace
+// - typescript.app
+// - vite.app
 
 const types = {
   declarations: "optional",
@@ -41,11 +55,17 @@ const deps = defineDeps({
   reactDomTypes: tool(npm("@types/react-dom", "^19.0.0"), {
     key: "@types/react-dom",
   }),
+  nodeTypes: tool(npm("@types/node", "^22.0.0"), { key: "@types/node" }),
   biome: tool(npm("@biomejs/biome", "^1.9.4"), { key: "@biomejs/biome" }),
 });
 
 export default define(
   <Workspace name="yuechen-li-dev" runtime="nodejs">
+    <CompatFiles>
+      <JsonFile path="tsconfig.tspack.json" value={TsConfig.manifestEditor()} />
+      <JsonFile path=".vscode/settings.json" value={VSCode.settings()} />
+      <JsonFile path=".vscode/extensions.json" value={VSCode.extensions()} />
+    </CompatFiles>
     <Package
       name="yuechen-li-dev"
       version="0.1.0"
@@ -60,6 +80,7 @@ export default define(
           deps.viteReact,
           deps.reactTypes,
           deps.reactDomTypes,
+          deps.nodeTypes,
           deps.biome,
         ],
       }}
@@ -72,6 +93,7 @@ export default define(
           deps.viteReact,
           deps.reactTypes,
           deps.reactDomTypes,
+          deps.nodeTypes,
           deps.biome,
         ]}
       />
@@ -100,7 +122,22 @@ export default define(
             name: "build",
             runtime: "node",
             command: ["vite", "build"],
-            ready: { kind: "stdout-match", pattern: "built in" },
+            url: "http://127.0.0.1:4173",
+          },
+          {
+            name: "docs-sync",
+            runtime: "node",
+            command: ["node", "scripts/sync-aetheris-docs.mjs"],
+          },
+          {
+            name: "docs-check",
+            runtime: "node",
+            command: ["node", "scripts/validate-docs.mjs", "--dist"],
+          },
+          {
+            name: "typecheck",
+            runtime: "node",
+            command: ["tsc", "--noEmit"],
           },
           {
             name: "preview",
@@ -151,6 +188,13 @@ export default define(
           level: "minor",
           reason:
             "Keep React DOM type declarations current within compatible minor updates.",
+        },
+        {
+          name: "@types/node",
+          kind: "tool",
+          strategy: "rolling",
+          level: "minor",
+          reason: "Keep Node type declarations aligned with the build runtime.",
         },
         {
           name: "@biomejs/biome",

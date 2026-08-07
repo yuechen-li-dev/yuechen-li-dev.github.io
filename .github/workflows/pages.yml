@@ -40,8 +40,14 @@ jobs:
       - name: Check formatting
         run: tspack check --format
 
+      - name: Type-check site
+        run: tspack run typecheck
+
       - name: Build site
         run: tspack run build
+
+      - name: Validate documentation routes and snapshot
+        run: tspack run docs-check
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
