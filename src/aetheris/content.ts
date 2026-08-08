@@ -121,9 +121,9 @@ export const DOC_PAGES: DocPage[] = [
   {
     route: "/aetheris/getting-started",
     group: "Introduction",
-    title: "Getting started from source",
+    title: "Getting started",
     description:
-      "Install the actual Preview 1 development build and produce your first STEP file.",
+      "Install Preview 1 from the Windows bundle or NuGet and produce your first STEP file.",
     keywords: [
       "install",
       "source",
@@ -136,16 +136,8 @@ export const DOC_PAGES: DocPage[] = [
     blocks: [
       {
         type: "html",
-        html: `<p class="lede">Preview 1 does not yet have a released NuGet package. The honest installation path is a source checkout and the .NET SDK pinned by <code>global.json</code>. This section is isolated so the packaging milestone can replace it cleanly.</p><h2>Prerequisites and build</h2><pre class="terminal"><code>git clone https://github.com/yuechen-li-dev/Aetheris.git
-cd Aetheris
-dotnet restore Aetheris.slnx
-dotnet build Aetheris.slnx -f net10.0 --no-restore /m:1
-cd aetheris.client
-npm install
-npm run build
-cd ..
-dotnet build Aetheris.Server/Aetheris.Server.csproj -f net10.0 --no-restore /m:1
-dotnet run --project Aetheris.CLI -- --help</code></pre><h2>Write one small thing</h2><p>Save this as <code>FirstPart.firmament</code>. It introduces exactly three facts: a model has millimetre units, a box has a size, and spelling matters.</p>`,
+        html: `<p class="lede">Preview 1 is available now. Choose the Windows bundle for the complete command-line and Cadmata viewer experience, or install the CLI as a .NET global tool.</p><h2>Download the complete Windows bundle</h2><p>Download <a href="https://github.com/yuechen-li-dev/Aetheris/releases/tag/v2.0.0-preview.1">Aetheris 2.0.0-preview.1</a>, extract <code>Aetheris-2.0.0-preview.1-win-x64.zip</code>, and run <code>aetheris.exe</code> from the extracted <code>Aetheris-win-x64</code> directory. It includes Cadmata and production frontend assets; <code>aetheris view</code> discovers it package-relatively.</p><h2>Install the CLI from NuGet</h2><pre class="terminal"><code>dotnet tool install --global Aetheris.CLI --prerelease
+aetheris --help</code></pre><p>The NuGet tool requires the .NET 10 runtime and supports validate, build, inspect, analyze, and verify. It does not bundle Cadmata; use the Windows bundle when you need <code>aetheris view</code>.</p><h2>Write one small thing</h2><p>Save this as <code>FirstPart.firmament</code>. It introduces exactly three facts: a model has millimetre units, a box has a size, and spelling matters.</p>`,
       },
       code(
         `Model FirstPart {
@@ -161,7 +153,7 @@ aetheris build FirstPart.firmament
 aetheris view FirstPart.firmament
 aetheris inspect FirstPart.firmament
 aetheris verify FirstPart.firmament
-aetheris analyze FirstPart.step --json</code></pre><p><code>validate</code> checks language and semantic intent without materializing geometry. <code>build</code> writes <code>FirstPart.step</code> beside the source; <code>view</code> builds Firmament if needed and opens the STEP in Cadmata; <code>inspect</code> reports source semantics; <code>analyze</code> reports STEP topology; and <code>verify</code> builds/reimports source for authoritative evidence.</p><p>Until P1-PACKAGE-M1 publishes the bundle, the one extra source-install step is building the Vite production bundle before the Cadmata host, as shown above. If <code>aetheris</code> is not installed on PATH, prefix the same arguments with <code>dotnet run --project Aetheris.CLI --</code>. No Vite development server or second terminal is required.</p>`,
+aetheris analyze FirstPart.step --json</code></pre><p><code>validate</code> checks language and semantic intent without materializing geometry. <code>build</code> writes <code>FirstPart.step</code> beside the source; <code>view</code> builds Firmament if needed and opens the STEP in Cadmata; <code>inspect</code> reports source semantics; <code>analyze</code> reports STEP topology; and <code>verify</code> builds/reimports source for authoritative evidence.</p><p><code>view</code> is available from the Windows bundle. If the NuGet tool is not on PATH, invoke it from the chosen tool-install location or use the Windows bundle executable. No Vite development server or second terminal is required.</p>`,
       },
     ],
   },
@@ -182,7 +174,7 @@ aetheris analyze FirstPart.step --json</code></pre><p><code>validate</code> chec
     blocks: [
       {
         type: "html",
-        html: `<p class="lede">Aetheris Firmament is the lightweight Preview 1 extension for <code>.firmament</code> files. It provides language recognition, canonical TextMate highlighting, comments and brackets, focused snippets, and commands backed by the real Aetheris CLI. It is not an LSP and does not duplicate the compiler.</p><h2>Install the development VSIX</h2><ol><li>Build or obtain <code>aetheris-firmament-0.1.0-preview.1.vsix</code>.</li><li>In VS Code run <strong>Extensions: Install from VSIX...</strong>.</li><li>Ensure <code>aetheris</code> is on PATH, or set <code>aetheris.executablePath</code> to the CLI executable.</li></ol><p>The extension has not been published to Marketplace.</p><h2>Editing and snippets</h2><p>Opening a <code>.firmament</code> file selects the Firmament language automatically. Snippets cover models, primitives, Concept Path/Profile, holes, slots, edge finishes, Require/PMI projection, volume assertions, and InlineStep. Highlighting improves readability; it does not prove that a geometry regime is supported.</p><h2>Commands and Problems</h2><dl><dt>Aetheris: Validate Firmament</dt><dd>Checks syntax and semantic intent without materializing geometry.</dd><dt>Aetheris: Build STEP</dt><dd>Runs the build stage, reports the adjacent STEP artifact, and can surface materialization-policy diagnostics.</dd><dt>Aetheris: View in Cadmata</dt><dd>Delegates build, Cadmata discovery, and launch to <code>aetheris view</code>.</dd><dt>Aetheris: Verify Model</dt><dd>Runs authoritative build/reimport verification.</dd></dl><p>Structured codes, severity, messages, and available source spans appear in VS Code Problems. Current Preview 1 CLI diagnostics do not all include source spans; those entries receive a minimal range rather than a guessed semantic location.</p><h2>Settings and trust</h2><dl><dt>aetheris.executablePath</dt><dd>Explicit CLI executable path. Empty means resolve <code>aetheris</code> from PATH.</dd><dt>aetheris.validateOnSave</dt><dd>Defaults on and validates only a saved Firmament file. No daemon starts on activation.</dd></dl><p>CLI commands and validate-on-save are disabled in untrusted workspaces because they execute a local compiler on workspace files.</p><h2>Current limits</h2><p>No completion, hover, semantic tokens, navigation, rename, formatting, embedded CAD view, project model, or background language service is included. Validate and build remain deliberately distinct; consult the frozen support matrix when build rejects unsupported geometry.</p>`,
+        html: `<p class="lede">Aetheris Firmament is the lightweight Preview 1 extension for <code>.firmament</code> files. It provides language recognition, canonical TextMate highlighting, comments and brackets, focused snippets, and commands backed by the real Aetheris CLI. It is not an LSP and does not duplicate the compiler.</p><h2>Install the VSIX</h2><ol><li>Download <a href="https://github.com/yuechen-li-dev/Aetheris/releases/tag/v2.0.0-preview.1"><code>aetheris-firmament-0.1.0-preview.1.vsix</code></a> from the Preview 1 GitHub Release.</li><li>In VS Code run <strong>Extensions: Install from VSIX...</strong>.</li><li>Ensure <code>aetheris</code> is on PATH, or set <code>aetheris.executablePath</code> to the CLI executable.</li></ol><p>The extension has not been published to Marketplace.</p><h2>Editing and snippets</h2><p>Opening a <code>.firmament</code> file selects the Firmament language automatically. Snippets cover models, primitives, Concept Path/Profile, holes, slots, edge finishes, Require/PMI projection, volume assertions, and InlineStep. Highlighting improves readability; it does not prove that a geometry regime is supported.</p><h2>Commands and Problems</h2><dl><dt>Aetheris: Validate Firmament</dt><dd>Checks syntax and semantic intent without materializing geometry.</dd><dt>Aetheris: Build STEP</dt><dd>Runs the build stage, reports the adjacent STEP artifact, and can surface materialization-policy diagnostics.</dd><dt>Aetheris: View in Cadmata</dt><dd>Delegates build, Cadmata discovery, and launch to <code>aetheris view</code>.</dd><dt>Aetheris: Verify Model</dt><dd>Runs authoritative build/reimport verification.</dd></dl><p>Structured codes, severity, messages, and available source spans appear in VS Code Problems. Current Preview 1 CLI diagnostics do not all include source spans; those entries receive a minimal range rather than a guessed semantic location.</p><h2>Settings and trust</h2><dl><dt>aetheris.executablePath</dt><dd>Explicit CLI executable path. Empty means resolve <code>aetheris</code> from PATH.</dd><dt>aetheris.validateOnSave</dt><dd>Defaults on and validates only a saved Firmament file. No daemon starts on activation.</dd></dl><p>CLI commands and validate-on-save are disabled in untrusted workspaces because they execute a local compiler on workspace files.</p><h2>Current limits</h2><p>No completion, hover, semantic tokens, navigation, rename, formatting, embedded CAD view, project model, or background language service is included. Validate and build remain deliberately distinct; consult the frozen support matrix when build rejects unsupported geometry.</p>`,
       },
     ],
   },
