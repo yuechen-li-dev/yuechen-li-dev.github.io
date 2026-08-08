@@ -519,7 +519,7 @@ Selection ReliefEntry { Target: SlotEntry Source: Slot(Relief) Require: ClosedLo
     blocks: [
       {
         type: "html",
-        html: `<p class="lede">EdgeFinish operates on declared source geometry: a profile segment, connected chain, or admitted loop. It does not inspect the final B-rep and guess which edge the author probably meant. This is why selections remain stable—and why unsupported topology is rejected instead of “best-efforted” into a different model.</p><h2>Chamfer</h2><p>Chamfer uses <code>Kind: Chamfer</code> and <code>Distance</code>. Frozen Profile support includes Top/Bottom straight segments, connected chains, convex/reflex junctions, rounded-source cases, and admitted mixed line/arc whole loops. Patches are exact planes or cones, including bounded cone apex. There is no NURBS fallback.</p>`,
+        html: `<p class="lede">EdgeFinish operates on declared source geometry: a profile segment, connected chain, or admitted loop. It does not inspect the final B-rep and guess which edge the author probably meant. This is why selections remain stable—and why unsupported topology is rejected instead of “best-efforted” into a different model.</p><h2>Chamfer</h2><p>Chamfer uses <code>Kind: Chamfer</code> and <code>Distance</code>. Frozen Profile support includes Top/Bottom straight segments, connected chains, convex/reflex junctions, rounded-source cases, and admitted mixed line/arc whole loops. Patches are exact planes or cones, including bounded cone apex. There is no NURBS fallback.</p><p><strong>Interop note.</strong> The released chamfer evidence renders correctly in ACIS- and OCCT-based readers. Some Parasolid-based importers may fail to materialize these chamfers correctly; visually inspect chamfered parts after import. This is a downstream importer limitation, not an instruction to heal or approximate the exported exact geometry.</p>`,
       },
       code(
         `${lPath}
@@ -604,7 +604,7 @@ Modify Body {
       },
       {
         type: "html",
-        html: `<div class="warning"><strong>Experimental means experimental.</strong> The mixed seven-station whole-loop fillet builds and reimports, but curved-trim volume verification carries a certified error bound of about 41,239 mm³. A successful artifact does not promote it. Reduce the request to a supported route or report the limitation.</div>`,
+        html: `<div class="warning"><strong>Experimental means experimental.</strong> The mixed seven-station whole-loop fillet builds and reimports, but Aetheris does not yet have an authoritative CIR/FRep occupied-volume model for this Profile family. Its display-derived B-rep mass estimate is diagnostic only. A successful artifact does not promote it. Reduce the request to a supported route or report the limitation.</div>`,
       },
     ],
   },
@@ -663,7 +663,7 @@ Modify Body {
     blocks: [
       {
         type: "html",
-        html: `<p class="lede"><code>Assert Volume</code> is a source-level assertion. Build emits STEP, reimports that authoritative artifact, measures its B-rep, and evaluates the assertion. Assertion text does not alter STEP.</p>`,
+        html: `<p class="lede"><code>Assert Volume</code> is a source-level assertion. Build emits and reimports STEP so exact topology/interchange evidence stays separate from occupied-volume evidence. Bounded analytic measurements gate their admitted families; display-tessellation estimates may appear in diagnostics but are never authoritative. Assertion text does not alter STEP.</p>`,
       },
       code(
         `Assert Volume Base {
@@ -675,7 +675,7 @@ Modify Body {
       ),
       {
         type: "html",
-        html: `<dl><dt>Expected</dt><dd>Finite literal volume in mm^3.</dd><dt>Tolerance</dt><dd>Absolute, non-negative literal volume.</dd><dt>Note</dt><dd>Optional evidence metadata, not geometry.</dd></dl><h2>Which command knows what?</h2><ul><li><code>validate</code> checks language and semantic intent; it does not materialize every geometry policy.</li><li><code>build</code> plans/materializes exact geometry and is therefore where topology-policy errors such as ConvexSmall are reported.</li><li><code>inspect-profile</code>, <code>inspect-compose</code>, and <code>inspect-selections</code> expose normalized source semantics.</li><li><code>analyze</code> reads STEP topology/geometry and sequential IDs.</li><li><code>verify</code> reimports STEP and emits independent evidence.</li></ul><h2>Known limit</h2><p>Curved trimmed faces can carry a conservative deterministic error bound. The mixed whole-loop fillet's current bound is about 41,239 mm³, so it remains Experimental. Do not widen tolerance until red becomes aesthetically compatible with green.</p><h2>Determinism</h2><p>Fixed source/route emits canonical deterministic AP242 and advertised routes reimport/manifold-check. Exact surface families include Plane, Cylinder, Cone, Sphere, Torus, and bounded Hyperbola; curves are lines, circles, and arcs.</p>`,
+        html: `<dl><dt>Expected</dt><dd>Finite literal volume in mm^3.</dd><dt>Tolerance</dt><dd>Absolute, non-negative literal volume.</dd><dt>Note</dt><dd>Optional evidence metadata, not geometry.</dd></dl><h2>Which command knows what?</h2><ul><li><code>validate</code> checks language and semantic intent; it does not materialize every geometry policy.</li><li><code>build</code> plans/materializes exact geometry and is therefore where topology-policy errors such as ConvexSmall are reported.</li><li><code>inspect-profile</code>, <code>inspect-compose</code>, and <code>inspect-selections</code> expose normalized source semantics.</li><li><code>analyze</code> reads STEP topology/geometry and sequential IDs.</li><li><code>verify</code> reimports STEP and emits independent evidence.</li></ul><h2>Known limit</h2><p>The intended occupied-volume authority is CIR/FRep, complementary to exact B-rep topology and STEP interchange. Whole-loop Profile Fillet does not yet have that CIR mirror, so it remains Experimental. Its tessellated B-rep volume is a coarse sanity estimate, not certification.</p><h2>Determinism</h2><p>Fixed source/route emits canonical deterministic AP242 and advertised routes reimport/manifold-check. Exact surface families include Plane, Cylinder, Cone, Sphere, Torus, and bounded Hyperbola; curves are lines, circles, and arcs.</p>`,
       },
     ],
   },
