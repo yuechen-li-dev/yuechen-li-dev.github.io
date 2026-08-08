@@ -131,7 +131,13 @@ export function FirmamentCode({ source }: { source: string }) {
   return (
     <code>
       {tokens.map((token, index) => {
-        const className = tokenClass(token);
+        const nextSignificant = tokens
+          .slice(index + 1)
+          .find((item) => !/^\s+$/.test(item));
+        const className =
+          /^[A-Za-z_][A-Za-z0-9_]*$/.test(token) && nextSignificant === ":"
+            ? "tok-field"
+            : tokenClass(token);
         return className ? (
           <span className={className} key={`${index}-${token}`}>
             {token}

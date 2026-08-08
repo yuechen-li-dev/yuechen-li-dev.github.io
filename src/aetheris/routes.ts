@@ -1,6 +1,7 @@
 export const AETHERIS_ROUTES = [
   "/aetheris/",
   "/aetheris/getting-started",
+  "/aetheris/vscode",
   "/aetheris/why-aetheris",
   "/aetheris/firmament/language-tour",
   "/aetheris/firmament/concept-path",

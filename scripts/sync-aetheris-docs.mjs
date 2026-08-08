@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { spawnSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -65,6 +66,21 @@ const snapshot = {
 
 await mkdir(dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${JSON.stringify(snapshot, null, 2)}\n`, "utf8");
+const biome = spawnSync(
+  process.execPath,
+  [
+    resolve(siteRoot, "node_modules/@biomejs/biome/bin/biome"),
+    "format",
+    "--write",
+    outputPath,
+  ],
+  { cwd: siteRoot, encoding: "utf8" },
+);
+if (biome.status !== 0) {
+  throw new Error(
+    `Could not format the generated capability snapshot:\n${biome.stderr || biome.stdout}`,
+  );
+}
 console.log(
   `Synced ${snapshot.features.length} capabilities and verified ${fixturePaths.size} fixtures.`,
 );

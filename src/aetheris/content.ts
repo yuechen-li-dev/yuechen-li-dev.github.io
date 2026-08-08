@@ -166,6 +166,27 @@ aetheris analyze FirstPart.step --json</code></pre><p><code>validate</code> chec
     ],
   },
   {
+    route: "/aetheris/vscode",
+    group: "Introduction",
+    title: "VS Code",
+    description:
+      "Edit Firmament as a first-class language with canonical highlighting and CLI-backed Problems.",
+    keywords: [
+      "VS Code",
+      "VSIX",
+      "extension",
+      "Problems",
+      "snippets",
+      "validate on save",
+    ],
+    blocks: [
+      {
+        type: "html",
+        html: `<p class="lede">Aetheris Firmament is the lightweight Preview 1 extension for <code>.firmament</code> files. It provides language recognition, canonical TextMate highlighting, comments and brackets, focused snippets, and commands backed by the real Aetheris CLI. It is not an LSP and does not duplicate the compiler.</p><h2>Install the development VSIX</h2><ol><li>Build or obtain <code>aetheris-firmament-0.1.0-preview.1.vsix</code>.</li><li>In VS Code run <strong>Extensions: Install from VSIX...</strong>.</li><li>Ensure <code>aetheris</code> is on PATH, or set <code>aetheris.executablePath</code> to the CLI executable.</li></ol><p>The extension has not been published to Marketplace.</p><h2>Editing and snippets</h2><p>Opening a <code>.firmament</code> file selects the Firmament language automatically. Snippets cover models, primitives, Concept Path/Profile, holes, slots, edge finishes, Require/PMI projection, volume assertions, and InlineStep. Highlighting improves readability; it does not prove that a geometry regime is supported.</p><h2>Commands and Problems</h2><dl><dt>Aetheris: Validate Firmament</dt><dd>Checks syntax and semantic intent without materializing geometry.</dd><dt>Aetheris: Build STEP</dt><dd>Runs the build stage, reports the adjacent STEP artifact, and can surface materialization-policy diagnostics.</dd><dt>Aetheris: View in Cadmata</dt><dd>Delegates build, Cadmata discovery, and launch to <code>aetheris view</code>.</dd><dt>Aetheris: Verify Model</dt><dd>Runs authoritative build/reimport verification.</dd></dl><p>Structured codes, severity, messages, and available source spans appear in VS Code Problems. Current Preview 1 CLI diagnostics do not all include source spans; those entries receive a minimal range rather than a guessed semantic location.</p><h2>Settings and trust</h2><dl><dt>aetheris.executablePath</dt><dd>Explicit CLI executable path. Empty means resolve <code>aetheris</code> from PATH.</dd><dt>aetheris.validateOnSave</dt><dd>Defaults on and validates only a saved Firmament file. No daemon starts on activation.</dd></dl><p>CLI commands and validate-on-save are disabled in untrusted workspaces because they execute a local compiler on workspace files.</p><h2>Current limits</h2><p>No completion, hover, semantic tokens, navigation, rename, formatting, embedded CAD view, project model, or background language service is included. Validate and build remain deliberately distinct; consult the frozen support matrix when build rejects unsupported geometry.</p>`,
+      },
+    ],
+  },
+  {
     route: "/aetheris/why-aetheris",
     group: "Introduction",
     title: "Why Aetheris?",
@@ -701,7 +722,7 @@ Replace Source.MountHole With Hole<Shaft> MountHole {
       ),
       {
         type: "html",
-        html: `<h2>Two kinds of number</h2><p><code>Faces: [7]</code> and <code>Source.Face(7)</code> use sequential analysis IDs. Raw <code>ADVANCED_FACE #191</code> is traceability, not authoring vocabulary—roughly the difference between a building's tax-lot number and its third-floor conference room.</p><h2>Boundary</h2><p>Preview 1 recognizes HoleShaft and DatumPlane. Replacement is verified ThroughAll Shaft with On, Center, Diameter, and HostSize. Input must be canonical Aetheris AP242; general foreign STEP and automatic recovery are unsupported.</p>`,
+        html: `<h2>Two kinds of number</h2><p><code>Faces: [7]</code> and <code>Source.Face(7)</code> use sequential analysis IDs. Raw <code>ADVANCED_FACE #191</code> is traceability, not authoring vocabulary—roughly the difference between a building's tax-lot number and its third-floor conference room.</p><h2>Label without rebuilding</h2><p>Analyze and bounded recognition can label a canonical imported model without replacing it. Preview 1 can inspect those labels and use them for the admitted PMI/replacement route; it does not claim to persist arbitrary foreign feature history or every label through re-export.</p><h2>Boundary</h2><p>Preview 1 recognizes HoleShaft and DatumPlane. Replacement is verified ThroughAll Shaft with On, Center, Diameter, and HostSize. Input must be canonical Aetheris AP242; general foreign STEP and automatic recovery are unsupported.</p><h2>Appropriate difficulty</h2><p>Aetheris removes accidental complexity, not geometric complexity. A clean cylindrical through-hole should take an analysis ID and one recognition declaration. Reconstructing an ambiguous blend tree in malformed, spline-heavy STEP is genuinely hard; Preview 1 says so plainly instead of pretending it understood.</p>`,
       },
     ],
   },
@@ -1034,7 +1055,7 @@ InlineStep N { Path: "…" } Recognize N { Region … } Replace N.Region With Ho
       },
       {
         type: "html",
-        html: `<h2>See the result</h2><pre class="terminal"><code># Need to see Firmament?
+        html: `<h2>VS Code</h2><p>The Aetheris Firmament extension recognizes <code>.firmament</code> files. Its Problems entries come from the real CLI, not an editor-side parser. Do not infer language or geometry support from syntax highlighting. When a build diagnostic reports an unsupported geometry regime, respect the frozen capability matrix rather than inventing syntax.</p><h2>See the result</h2><pre class="terminal"><code># Need to see Firmament?
 aetheris view model.firmament
 
 # Already have STEP?
