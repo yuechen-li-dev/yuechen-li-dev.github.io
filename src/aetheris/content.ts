@@ -114,7 +114,7 @@ export const DOC_PAGES: DocPage[] = [
       },
       {
         type: "html",
-        html: `<h2>Five useful minutes</h2><div class="cards"><a href="/aetheris/getting-started"><strong>Build your first part</strong><span>Use the real source workflow, then validate, build, and inspect.</span></a><a href="/aetheris/firmament/language-tour"><strong>Learn the mental model</strong><span>Units, declarations, source identity, and exactness.</span></a><a href="/aetheris/reference/support"><strong>Check the boundary</strong><span>The matrix comes from the frozen release manifest.</span></a><a href="/aetheris/for-llms"><strong>Give this to a model</strong><span>A compact canonical context without parser archaeology.</span></a></div>`,
+        html: `<h2>Five useful minutes</h2><div class="cards"><a href="/aetheris/getting-started"><strong>Build your first part</strong><span>Use the real source workflow, then validate, build, view, and inspect.</span></a><a href="/aetheris/firmament/language-tour"><strong>Learn the mental model</strong><span>Units, declarations, source identity, and exactness.</span></a><a href="/aetheris/reference/support"><strong>Check the boundary</strong><span>The matrix comes from the frozen release manifest.</span></a><a href="/aetheris/for-llms"><strong>Give this to a model</strong><span>A compact canonical context without parser archaeology.</span></a></div>`,
       },
     ],
   },
@@ -140,6 +140,11 @@ export const DOC_PAGES: DocPage[] = [
 cd Aetheris
 dotnet restore Aetheris.slnx
 dotnet build Aetheris.slnx -f net10.0 --no-restore /m:1
+cd aetheris.client
+npm install
+npm run build
+cd ..
+dotnet build Aetheris.Server/Aetheris.Server.csproj -f net10.0 --no-restore /m:1
 dotnet run --project Aetheris.CLI -- --help</code></pre><h2>Write one small thing</h2><p>Save this as <code>FirstPart.firmament</code>. It introduces exactly three facts: a model has millimetre units, a box has a size, and spelling matters.</p>`,
       },
       code(
@@ -151,10 +156,12 @@ dotnet run --project Aetheris.CLI -- --help</code></pre><h2>Write one small thin
       ),
       {
         type: "html",
-        html: `<h2>Validate, build, inspect</h2><pre class="terminal"><code>dotnet run --project Aetheris.CLI -- validate FirstPart.firmament --json
-dotnet run --project Aetheris.CLI -- build FirstPart.firmament --out out/FirstPart.step --json
-dotnet run --project Aetheris.CLI -- analyze out/FirstPart.step --json
-dotnet run --project Aetheris.CLI -- verify out/FirstPart.step --json</code></pre><p><code>validate</code> checks language and semantic intent. <code>build</code> materializes geometry, enforces geometry-policy boundaries, and writes STEP. <code>analyze</code> reports materialized topology and geometry; <code>verify</code> reimports the artifact and emits independent evidence. With <code>--out</code>, the STEP is exactly where you put it—which is a small kindness, but tooling has withheld smaller ones.</p>`,
+        html: `<h2>Five-minute loop</h2><pre class="terminal"><code>aetheris validate FirstPart.firmament
+aetheris build FirstPart.firmament
+aetheris view FirstPart.firmament
+aetheris inspect FirstPart.firmament
+aetheris verify FirstPart.firmament
+aetheris analyze FirstPart.step --json</code></pre><p><code>validate</code> checks language and semantic intent without materializing geometry. <code>build</code> writes <code>FirstPart.step</code> beside the source; <code>view</code> builds Firmament if needed and opens the STEP in Cadmata; <code>inspect</code> reports source semantics; <code>analyze</code> reports STEP topology; and <code>verify</code> builds/reimports source for authoritative evidence.</p><p>Until P1-PACKAGE-M1 publishes the bundle, the one extra source-install step is building the Vite production bundle before the Cadmata host, as shown above. If <code>aetheris</code> is not installed on PATH, prefix the same arguments with <code>dotnet run --project Aetheris.CLI --</code>. No Vite development server or second terminal is required.</p>`,
       },
     ],
   },
@@ -703,7 +710,7 @@ Replace Source.MountHole With Hole<Shaft> MountHole {
     group: "CLI",
     title: "Command-line reference",
     description:
-      "Validate, build, inspect, analyze, and verify with stable JSON output.",
+      "Validate, build, view, inspect, analyze, and verify with stable JSON output.",
     keywords: [
       "CLI",
       "validate",
@@ -723,26 +730,47 @@ Replace Source.MountHole With Hole<Shaft> MountHole {
         type: "matrix",
         headers: ["Command", "Input", "Purpose"],
         rows: [
-          ["validate", ".firmament / .firmfixture", "Validate V2 intent"],
-          ["build", ".firmament", "Build STEP; optional --out/--json"],
-          ["inspect-profile", ".firmament", "Resolve Profile"],
-          ["inspect-compose", ".firmament", "Normalize section stack"],
-          ["inspect-selections", ".firmament", "Resolve source topology"],
+          [
+            "validate",
+            ".firmament",
+            "Check syntax, binding, dimensions, and static semantics",
+          ],
+          [
+            "build",
+            ".firmament",
+            "Build adjacent .step; --output overrides the path",
+          ],
+          [
+            "view",
+            ".firmament / .step / .stp",
+            "Build if needed, then open the STEP artifact",
+          ],
+          [
+            "inspect",
+            ".firmament / .step / .stp",
+            "Show source semantics or STEP topology",
+          ],
           [
             "analyze",
             ".step",
             "Inspect geometry/topology/maps/sections/volume",
           ],
-          ["verify", ".step", "Reimport and hash-tie independent evidence"],
+          [
+            "verify",
+            ".firmament / .step / .stp",
+            "Build source if needed, reimport, and verify",
+          ],
         ],
       },
       {
         type: "html",
-        html: `<pre class="terminal"><code>aetheris validate part.firmament --json
-aetheris build part.firmament --out out/part.step --json
-aetheris inspect-compose part.firmament --json --materialize
-aetheris analyze out/part.step --face 7 --json
-aetheris verify out/part.step --expected-volume 100000 --json</code></pre><h2>Exit behavior</h2><p>Success is zero; validation/build failure is non-zero with diagnostics. <code>verify --require-external</code> returns exit 2 when the CAD assistant is unavailable. Inspect exit code and JSON. The current view workflow is analysis plus optional <code>verify --cad-assistant</code>; there is no separate general <code>view</code> command.</p>`,
+        html: `<pre class="terminal"><code>aetheris validate part.firmament
+aetheris build part.firmament
+aetheris inspect part.firmament --json
+aetheris verify part.firmament
+aetheris analyze part.step --face 7 --json
+aetheris view part.firmament
+aetheris view part.step</code></pre><h2>Defaults and exit behavior</h2><p><code>build</code> writes <code>part.step</code> beside <code>part.firmament</code> and deterministically replaces that generated artifact. Use <code>--output path.step</code> for another destination. <code>validate</code> does not materialize geometry; use <code>build</code> for geometry-policy diagnostics and STEP generation. Success is zero; command, validation, build, launch, and verification failures are non-zero. JSON keeps result fields and diagnostics on stdout without human prose.</p><h2>Cadmata launch</h2><p><code>view part.firmament</code> builds and opens its adjacent STEP; <code>view part.step</code> and <code>.stp</code> open directly without compilation. Aetheris hands Cadmata one normalized absolute path, checks that the process starts, and returns while the viewer remains open. Preview 1 starts a new Cadmata instance for every invocation.</p><p>Cadmata discovery checks <code>--cadmata-path</code>, <code>AETHERIS_CADMATA_PATH</code>, the compatibility <code>AETHERIS_CAD_ASSISTANT_PATH</code>, a sibling or package-relative <code>cadmata/Cadmata.exe</code>, PATH, and finally a source-development build. The legacy <code>--cad-assistant-path</code> flag remains accepted. Normal packaged use requires none of these overrides. Missing input, unsupported extensions, build failure, missing Cadmata, and process-launch failure are reported by the CLI; STEP import/display failure is shown inside Cadmata.</p>`,
       },
     ],
   },
@@ -1006,7 +1034,11 @@ InlineStep N { Path: "…" } Recognize N { Region … } Replace N.Region With Ho
       },
       {
         type: "html",
-        html: `<h2>Error recovery</h2><p>Run <code>aetheris validate file.firmament --json</code>, then build supported geometry to reach materialization-policy checks. For malformed declarations, consult field reference. For unsupported policy, narrow to the support matrix. Retry after a grammar correction. Never inspect parser source to guess syntax; report a documentation gap.</p><h2>Unsupported</h2><p>Runtime scripting; arbitrary Booleans; foreign STEP decompilation; automatic recovery; mesh/NURBS production fallback; general GD&amp;T; automatic PMI; construction-plane counterbores/countersinks; unlisted slots; broad fillet chains; mixed whole-loop fillet as Supported.</p>`,
+        html: `<h2>See the result</h2><pre class="terminal"><code># Need to see Firmament?
+aetheris view model.firmament
+
+# Already have STEP?
+aetheris view model.step</code></pre><p>Use the CLI. Do not manually start frontend servers, guess Cadmata ports, or search the repository for frontend launch scripts.</p><h2>Error recovery</h2><p>Run <code>aetheris validate file.firmament --json</code>, then build supported geometry to reach materialization-policy checks. For malformed declarations, consult field reference. For unsupported policy, narrow to the support matrix. Retry after a grammar correction. Never inspect parser source to guess syntax; report a documentation gap.</p><h2>Unsupported</h2><p>Runtime scripting; arbitrary Booleans; foreign STEP decompilation; automatic recovery; mesh/NURBS production fallback; general GD&amp;T; automatic PMI; construction-plane counterbores/countersinks; unlisted slots; broad fillet chains; mixed whole-loop fillet as Supported.</p>`,
       },
     ],
   },
