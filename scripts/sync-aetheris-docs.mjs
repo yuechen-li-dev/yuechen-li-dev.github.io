@@ -31,6 +31,7 @@ const fixturePaths = {
   hexBolt: "testdata/firmament/examples/hexbolt_template_m2.firmament",
   profileBracket:
     "fixtures/FirmamentV2/Canonical/valid/profile-compose-l-bracket-counterbore-pmi.firmament",
+  drawing: "fixtures/DrawingM0/bearing-block-drawing.firmament",
   forgeHost: "tools/Aetheris.Forge.M1Evidence/Program.cs",
   forgeExtension: "Aetheris.Forge.SampleExtension/SecretGeometryExtension.cs",
 };
@@ -107,6 +108,8 @@ const visualAssets = {
     "docs/preview2/evidence/hexbolt-m1/generated-isometric.png",
   "hexbolt-surface-mesh.png":
     "docs/preview2/evidence/surface-mesh-ir-m7/ctc-faces-3-98-provenance.png",
+  "bearing-block-drawing.png":
+    "docs/drawing/artifacts/m0/BearingBlockProduction-page-1.png",
 };
 const assetRoot = resolve(siteRoot, "public/aetheris/assets/preview2");
 await mkdir(assetRoot, { recursive: true });

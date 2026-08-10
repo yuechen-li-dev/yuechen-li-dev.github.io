@@ -43,6 +43,7 @@ export const NAV_GROUPS = [
   "Geometry",
   "Analysis",
   "Assemblies",
+  "Drawings",
   "Examples",
   "Tools & reference",
 ] as const;
@@ -100,6 +101,33 @@ export const DOC_PAGES: DocPage[] = [
         "<h2>CAD output is not the whole product</h2><p>Aetheris retains exact topology and a semantic graph. A face can still be “the bearing seat” when the same part reaches Selection, FEA, Forge, or an Assembly Role. That is more durable than teaching every downstream tool a particular edge number.</p><h2>Programs and data, not copied parts</h2><p>Records, Static Tables, <code>with</code>, and Templates make standards families inspectable compiler inputs. Specialization provenance records which row, override, Match arm, and argument produced an instance.</p><h2>Analysis is connected to authoring</h2><p>Loads and constraints resolve through exact semantic bindings. Assembly Fits and Relations become typed dimensional graph transitions. A worst-case stackup is checked during compilation with every contribution retained.</p><h2>Capability can arrive locally</h2><p>Forge extensions can contribute validated exact BRep, optional CIR associations, and semantic members. Company-specific construction need not expand the trusted general-purpose kernel.</p>",
       ),
     ],
+  ),
+  page(
+    "/aetheris/drawings",
+    "Drawings",
+    "A4 drawings are compiled views of the product",
+    "Drawing M0 projects exact BRep and existing semantic PMI into deterministic A4 pages without creating a second engineering authority.",
+    ["Drawing", "A4", "PMI", "PDF", "React", "vector"],
+    [
+      html(
+        `<div class="callout"><strong>The semantic 3D product remains authoritative.</strong><p>A Drawing is a disposable, reproducible printable projection. Change the model, PMI, tolerance, or standards Table and compile the Drawing again.</p></div><h2>One compile path</h2><p>A normal Firmament Template returns <code>Drawing</code>. It binds a source Product, manually selected view directions, and explicit PMI-to-view assignments. The compiler projects exact BRep edges, chooses bounded annotation candidates, flows tables to readable A4 pages, and emits DrawingIR, SVG, and vector PDF.</p>`,
+      ),
+      code(
+        "drawing",
+        "The canonical bearing-block Drawing Concept, Drawing Template, specialization, semantic PMI assignment, and design Table.",
+        "Product → exact BRep/PMI → Drawing Template → deterministic A4 vector PDF",
+      ),
+      {
+        kind: "figure",
+        src: "/aetheris/assets/preview2/bearing-block-drawing.png",
+        alt: "A4 bearing block production drawing with orthographic and isometric vector views and collision-free PMI",
+        caption: "Page 1 of the canonical A4 output. The standards Table flows to page 2 instead of shrinking the drawing.",
+      },
+      html(
+        "<h2>Bounded M0 contract</h2><ul><li>A4 portrait or landscape only;</li><li>manual orthographic/isometric views and manual PMI assignment;</li><li>deterministic exterior annotation lanes and free-leader candidates;</li><li>real React tables and document structure;</li><li>native vector PDF with physical A4 MediaBox dimensions.</li></ul><p>M0 does not yet claim exact face-occlusion hidden-line removal, Assembly/BOM drawings, sections/details, or complete ISO/ASME drafting coverage.</p>",
+      ),
+    ],
+    "Drawing M0 · bounded",
   ),
   page(
     "/aetheris/firmament/philosophy",

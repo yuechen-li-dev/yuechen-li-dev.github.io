@@ -10,7 +10,7 @@ test("Preview 2 canonical data has implementation-grounded coverage", async () =
   const data = JSON.parse(
     await read("src/aetheris/generated/preview2-docs.json"),
   );
-  assert.equal(data.version, "Preview 2 consolidation M1");
+  assert.equal(data.version, "Preview 2 Assembly M2");
   assert.ok(
     data.languageFeatures.some(
       (feature) =>

@@ -21,6 +21,7 @@ export const AETHERIS_ROUTES = [
   "/aetheris/analysis/fea",
   "/aetheris/assemblies/interfaces-mates",
   "/aetheris/assemblies/tolerance-stackup",
+  "/aetheris/drawings",
   "/aetheris/examples/bearing-module",
   "/aetheris/examples/template-block-pair",
   "/aetheris/examples/plate-with-hole",
