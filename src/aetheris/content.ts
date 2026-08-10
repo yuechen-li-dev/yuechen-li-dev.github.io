@@ -40,6 +40,7 @@ export const NAV_GROUPS = [
   "Start",
   "Firmament V2",
   "Forge",
+  "Modules",
   "Geometry",
   "Analysis",
   "Assemblies",
@@ -49,6 +50,63 @@ export const NAV_GROUPS = [
 ] as const;
 
 export const DOC_PAGES: DocPage[] = [
+  page(
+    "/aetheris/modules/architecture",
+    "Modules",
+    "Engineering Modules own domain meaning",
+    "Typed built-in Modules let engineering domains own vocabulary, validation, templates, and lowering without expanding the shared kernel into a giant generic CAD API.",
+    ["Modules", "architecture", "capabilities", "Piping", "Surfacing"],
+    [
+      html(
+        `<div class="callout"><strong>Modules are semantic packages, not UI workbenches or dynamic plug-ins.</strong><p>Core knows compiler and exact-geometry semantics. Modules know engineering-domain invariants.</p></div><h2>The M0 boundary</h2><p><code>AetherisModule</code> carries an explicit stable ID, semantic version, capabilities, Concepts, Templates, lowerings, diagnostics, bounded dependencies, and documentation metadata. Registration is explicit and deterministic: duplicate IDs, duplicate capability owners, missing or old dependencies, and dependency cycles are typed errors.</p><h2>Capability means two different things</h2><p>A Module capability such as <code>Piping.PipeRoute</code> says a domain compiler path is available. A <code>SemanticValue</code> capability such as <code>AxisCapable</code> proves what one result exposes. The types remain separate.</p><h2>Forge boundary</h2><p>Forge Host can inspect built-in Modules without KernelSDK. KernelSDK remains the advanced capability-development seam; ordinary Module users consume typed APIs and Templates.</p>`,
+      ),
+      {
+        kind: "matrix",
+        headers: ["Module", "M0 status", "Capabilities"],
+        rows: [
+          [
+            "Aetheris.Surfacing 0.1.0",
+            "Bounded",
+            "RuledSurface, RuledTransition",
+          ],
+          ["Aetheris.Piping 0.1.0", "Bounded", "PathPipe, PipeRoute"],
+          [
+            "Aetheris.SheetMetal 0.1.0",
+            "Reserved",
+            "No implemented M0 capability",
+          ],
+        ],
+      },
+      html(
+        "<p>M0 deliberately adds no Firmament import keyword. Module-owned Templates lower to ordinary canonical construction and capability boundaries use qualified IDs. This keeps the language small until native domain declarations create a real name-resolution problem.</p>",
+      ),
+    ],
+    "AETHERIS-MODULE-M0",
+  ),
+  page(
+    "/aetheris/modules/surfacing",
+    "Modules",
+    "Surfacing starts with mathematical constructions",
+    "RuledSurface and RuledTransition preserve high-level ruled intent through exact lowering, including a canonical hyperbolic-paraboloid proof.",
+    ["Surfacing", "RuledSurface", "RuledTransition", "saddle", "NURBS"],
+    [
+      html(
+        "<h2>Surfacing is not synonymous with NURBS</h2><p>Aetheris authors the construction that explains the shape. M0 line-line boundaries produce an exact degree-(1,1) ruled support; compatible coaxial circles produce exact cylinders or cones. <code>RuledTransition</code> records section-transition intent without introducing a generic user-facing Loft.</p><h2>Saddle proof</h2><p>Two skew boundary lines generate the bilinear hyperbolic-paraboloid family directly. The construction retains both boundary identities and developability evidence rather than “spline pretzeling” a mathematical ruled surface.</p><h2>Refinement hierarchy</h2><p>Future local spline refinement may consume a selected ruled region while retaining its parent construction and provenance. Raw spline patches are not the default authoring representation.</p><p><strong>Current boundary:</strong> line-line and coaxial circle-circle families; no arbitrary trimming network, continuity optimizer, or spline editor.</p>",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/modules/piping-sheet-metal",
+    "Modules",
+    "Piping dogfood and the Sheet Metal pressure test",
+    "PipeRoute lowers engineering centerline and section intent to exact analytic BRep; Sheet Metal reserves future developability and flat-pattern ownership.",
+    ["Piping", "PipeRoute", "PathPipe", "Sheet Metal", "developability"],
+    [
+      html(
+        "<h2>PipeRoute, not generic Sweep</h2><p>M0 admits a solid circular straight pipe and an inlet–90° planar bend–outlet route. Its line/arc/line centerline lowers to exact cylinder/torus/cylinder surfaces and ordinary STEP BRep. The circular-section frame transports seam phase deterministically with the route plane; generic twist knobs are unnecessary.</p><p>The semantic result exposes inlet/outlet points and axes, bend locations, diameter, and exact centerline identity. Hollow wall materialization, arbitrary 3D routes, branches, reducers, and route solving remain future work.</p><h2>Sheet Metal is reserved, not simulated</h2><p>The future Module owns neutral surface, thickness, formed state, bends and allowance, seams/reliefs, developability, and flat-pattern correspondence. This pressure required Surfacing M0 to retain construction and boundary provenance. No flattening is claimed today.</p>",
+      ),
+    ],
+  ),
   page(
     "/aetheris/",
     "Start",
@@ -107,7 +165,17 @@ export const DOC_PAGES: DocPage[] = [
     "Drawings",
     "A4 drawings are compiled views of the product",
     "Drawing M0B projects exact Part or occurrence-aware AssemblyIR into deterministic zoned A4 pages without creating a second engineering authority.",
-    ["Drawing", "A4", "AssemblyIR", "BOM", "HLR", "PMI", "PDF", "React", "vector"],
+    [
+      "Drawing",
+      "A4",
+      "AssemblyIR",
+      "BOM",
+      "HLR",
+      "PMI",
+      "PDF",
+      "React",
+      "vector",
+    ],
     [
       html(
         `<div class="callout"><strong>The semantic 3D product remains authoritative.</strong><p>A Drawing is a disposable, reproducible printable projection. Change the Part, AssemblyIR, PMI, tolerance, or metadata Record and compile it again.</p></div><h2>One compile path</h2><p>A normal Firmament Template returns <code>Drawing</code>. It binds a Part or Assembly Product plus typed <code>DrawingInfo</code>. Assembly leaves are projected with their resolved world transforms and occurrence identities intact. Exact BRep edge intervals are classified by bounded face occlusion, semantic PMI is laid out, BOM is derived from AssemblyIR, and DrawingIR feeds sibling React/SVG and native vector PDF renderers.</p>`,
@@ -130,13 +198,15 @@ Drawing MachineAssemblyProduction = StandardAssemblyDrawing<Product: Machine, Me
         kind: "figure",
         src: "/aetheris/assets/preview2/machine-assembly-drawing.png",
         alt: "A4 machine assembly drawing with occurrence-aware orthographic and isometric views, semantic zones, and structured information block",
-        caption: "Page 1 of the canonical nested Machine/BearingModule output. Its AssemblyIR-derived BOM is a real table on page 2.",
+        caption:
+          "Page 1 of the canonical nested Machine/BearingModule output. Its AssemblyIR-derived BOM is a real table on page 2.",
       },
       {
         kind: "figure",
         src: "/aetheris/assets/preview2/bearing-block-drawing.png",
         alt: "Upgraded A4 bearing block part drawing with semantic PMI, perimeter zones, Inter typography, and CODEX release attribution",
-        caption: "The Part path uses the same DrawingInfo, zone, typography, information-block, and deterministic native PDF contracts; its design table remains on page 2.",
+        caption:
+          "The Part path uses the same DrawingInfo, zone, typography, information-block, and deterministic native PDF contracts; its design table remains on page 2.",
       },
       html(
         "<h2>Bounded M0B contract</h2><ul><li>A4 portrait or landscape with stable A-D / 1-6 semantic zones;</li><li>manual orthographic/isometric views and manual PMI assignment;</li><li>occurrence-aware nested AssemblyIR projection without Boolean flattening;</li><li>VisibleOnly/VisibleAndHidden interval classification with split and unsupported-support evidence;</li><li>flattened leaf-part BOM from AssemblyIR;</li><li>typed Version/Date DrawingInfo with Static/with provenance;</li><li>searchable native PDF with embedded Inter and no raster pages.</li></ul><p>The HLR oracle is deliberately bounded by admitted face tessellation; unsupported patches are explicit and conservative. Sections/details, exploded views, and complete ISO/ASME coverage remain future work.</p>",
