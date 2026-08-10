@@ -1,7 +1,7 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
 
 import { AETHERIS_ROUTES } from "./src/aetheris/routes";
 
@@ -17,7 +17,7 @@ function staticDocsRoutes() {
         await mkdir(directory, { recursive: true });
         const title =
           route === "/aetheris/"
-            ? "Aetheris Preview 1"
+            ? "Aetheris Preview 2"
             : `Aetheris · ${route.split("/").at(-1)?.replaceAll("-", " ")}`;
         const routed = index
           .replace("<title>yuechen-li-dev</title>", `<title>${title}</title>`)

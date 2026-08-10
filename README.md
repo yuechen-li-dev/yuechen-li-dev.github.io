@@ -1,6 +1,6 @@
 # yuechen-li-dev
 
-Personal GitHub Pages site and the public Aetheris Preview 1 manual.
+Personal GitHub Pages site and the public Aetheris Preview 2 engineering manual.
 
 The manual lives at `/aetheris/`. Its React/Vite source is in
 `src/aetheris`, static route shells are emitted during the production build,

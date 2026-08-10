@@ -6,7 +6,7 @@ export function App() {
     <main className="site-home">
       <p className="eyebrow">yuechen-li-dev</p>
       <h1>Engineering software, written precisely.</h1>
-      <p>The public Aetheris Preview 1 manual is now available.</p>
+      <p>The public Aetheris Preview 2 engineering manual is now available.</p>
       <a className="home-link" href="/aetheris/">
         Read the Aetheris manual →
       </a>

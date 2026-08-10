@@ -13,6 +13,319 @@
   --orange: #d26a32;
   --code: #111a19;
 }
+
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: -4rem;
+  z-index: 100;
+  padding: 0.65rem 0.9rem;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.hero-story {
+  border-left: 4px solid var(--accent);
+  padding: 0.2rem 0 0.2rem 1.25rem;
+  margin: 0 0 2.5rem;
+}
+
+.hero-story .lede {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.25rem, 2.3vw, 1.7rem);
+  line-height: 1.45;
+  max-width: 38ch;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  align-items: center;
+}
+
+.primary-link {
+  background: var(--ink);
+  color: var(--paper) !important;
+  padding: 0.65rem 0.9rem;
+  text-decoration: none !important;
+}
+
+.feature-grid,
+.link-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 1.25rem 0 2rem;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+.metric-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  margin: 1rem 0;
+}
+
+.metric-strip > div {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.9rem;
+  border-right: 1px solid var(--line);
+}
+
+.metric-strip > div:last-child {
+  border-right: 0;
+}
+
+.metric-strip strong {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.metric-strip span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.feature-grid article,
+.link-cards a {
+  background: var(--paper);
+  padding: 1.1rem;
+  margin: 0;
+}
+
+.feature-grid h3 {
+  margin-top: 0;
+}
+
+.link-cards a {
+  display: grid;
+  gap: 0.3rem;
+  text-decoration: none;
+}
+
+.link-cards span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.callout,
+.source-note {
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  padding: 0.9rem 1rem;
+  margin: 1rem 0 1.5rem;
+  background: color-mix(in srgb, var(--accent) 5%, var(--paper));
+}
+
+.source-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  align-items: baseline;
+  font-size: 0.85rem;
+}
+
+.definition-grid {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.35fr) 1fr;
+  border-top: 1px solid var(--line);
+}
+
+.definition-grid dt,
+.definition-grid dd {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--line);
+  margin: 0;
+}
+
+.definition-grid dt {
+  font-weight: 700;
+}
+
+.flow-diagram {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+  gap: 0.5rem;
+  align-items: stretch;
+  margin: 1.5rem 0 2.25rem;
+}
+
+.flow-diagram > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: 0.9rem;
+  border-top: 3px solid var(--accent);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--accent) 4%, var(--paper));
+}
+
+.flow-diagram strong,
+.flow-diagram span {
+  overflow-wrap: anywhere;
+}
+
+.flow-diagram > div span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin-top: 0.35rem;
+}
+
+.flow-arrow {
+  align-self: center;
+  color: var(--accent);
+  font-size: 1.25rem;
+}
+
+.code-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.35rem;
+  padding: 0 0.8rem;
+  border-bottom: 1px solid #31413e;
+  background: #182522;
+  color: #c7d7d2;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.75rem;
+}
+
+.code-toolbar button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.35rem;
+}
+
+.code-card pre {
+  max-height: 42rem;
+  margin: 0;
+  max-width: 100%;
+  overflow: auto;
+  padding: 1.25rem;
+  background: var(--code);
+  color: #dce7e2;
+  font-size: 0.82rem;
+  line-height: 1.75;
+  tab-size: 4;
+}
+
+.demonstrates {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--muted);
+}
+
+.code-card figcaption > a {
+  display: inline-block;
+  margin-top: 0.35rem;
+}
+
+.markdown-document h2,
+.markdown-document h3,
+.markdown-document h4 {
+  scroll-margin-top: 5rem;
+}
+
+.feature-explorer {
+  margin-top: 1.25rem;
+}
+
+.explorer-controls {
+  display: grid;
+  grid-template-columns: minmax(15rem, 1fr) minmax(9rem, 0.3fr);
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--ink) 3%, var(--paper));
+}
+
+.explorer-controls label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.explorer-controls input,
+.explorer-controls select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0.65rem;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+}
+
+.status-bounded {
+  background: #f3e5b5;
+  color: #594500;
+}
+
+.status-experimental {
+  background: #eadcf1;
+  color: #502363;
+}
+
+.status-legacy,
+.status-unsupported {
+  background: #e6e4df;
+  color: #504e48;
+}
+
+@media (max-width: 900px) {
+  .flow-diagram {
+    grid-template-columns: 1fr;
+  }
+
+  .flow-arrow {
+    transform: rotate(90deg);
+    justify-self: center;
+  }
+}
+
+@media (max-width: 620px) {
+  .feature-grid,
+  .link-cards,
+  .metric-strip,
+  .explorer-controls,
+  .definition-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-strip > div {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .definition-grid dd {
+    padding-top: 0;
+  }
+
+  .definition-grid dt {
+    border-bottom: 0;
+  }
+
+  .code-card pre {
+    max-height: 32rem;
+  }
+}
 * {
   box-sizing: border-box;
 }

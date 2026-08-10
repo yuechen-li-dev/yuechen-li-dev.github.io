@@ -1,0 +1,552 @@
+{
+  "version": "Preview 2 consolidation M1",
+  "generatedAt": "2026-08-09",
+  "sources": {
+    "languageReference": "docs/firmament-v2/language-reference.md",
+    "quickstart": "docs/firmament-v2/quickstart.md",
+    "languageFeatures": "docs/firmament-v2/language-features.json",
+    "platformFeatures": "docs/preview2/feature-manifest.json"
+  },
+  "hashes": {
+    "languageReference": "5511c80f7725e49617c1f67b1961550cdd2b391aec86077e3117751b863c3106",
+    "quickstart": "cadccd2b48cf25ea063397c96b2779a8e3e1fccf9fade7575ed37893802944e0",
+    "languageFeaturesSource": "d7836bae63487bca11cb2d443643eecec35087e1e9517e43e47ae49cd682f065",
+    "platformFeaturesSource": "fb19f752de8097f95e032b27deada58c3de9e89cd6e7e2a7377bdc8cda556c36",
+    "fixture:bareBox": "7ad2f3387319cc526c599d5ad029f3b2107e00937d782b5a80a234703eb0b659",
+    "fixture:tableTemplate": "e4b85e56f2eb8102ca4d25608300b09a301dfc1f489ce0fc9a9cecbeec610a89",
+    "fixture:bearingModule": "3b408d7731e0163d7ecf4dda3cae7a2e64d437c2db49ba574397c610d2789e38",
+    "fixture:bearingModuleFailing": "875b88f93d91649b208dad30b20eb11691d215ec39069e02d83936a78a974c1d",
+    "fixture:templateBlockPair": "ea90a7e76b5286ad3459b4e7de558fbbebeb4799df95441c6f59ae142453bcdf",
+    "fixture:plateWithHole": "ea3e2ebcf07f54a9f86dca3188323643759e4532cacbd755c93e117bb02f041f",
+    "fixture:inlineStep": "f4f964578e3872c25a51ebb72c285ec28a3c1523707705604bdbec61b07e2641",
+    "fixture:hexBolt": "dd05da3ee77668b3cba05f97e8fdf9d9acbc2b9568213ea4dc4852fd2268dcc1",
+    "fixture:profileBracket": "927f91304029ffc52e70b70e9e97d1d670f6f4013b579d74edd20ceac0c4028e",
+    "fixture:forgeHost": "414bdf959e23e65246ecb1231916b47d93f6569dc3516d1f2d110d3f67742b19",
+    "fixture:forgeExtension": "03834b7010c770fddebd4dda20819566bb5610dec6e72f1b10b942f2eb41b8ea"
+  },
+  "languageReference": "# Firmament V2 language reference\n\nThis is the canonical implementation-grounded reference for Firmament V2 as of Assembly M1. Parser acceptance alone is not support: each feature below is classified by binding, lowering, tests, and a real consumer. Older milestone documents are historical evidence when they disagree with this page.\n\n## Language model\n\nFirmament is a deterministic, statically evaluated CAD authoring language. Source declarations bind names, units, immutable values, semantic contracts, selections, and construction intent. Compile-time Records, Tables, `with`, Templates, Match, Pattern, and `Require` are erased before feature AIR. Exact geometry lowers through bounded AIR/materializers to BRep and STEP AP242. Tolerance is symbolic engineering intent and does not perturb nominal geometry.\n\nThere are two current frontend lanes:\n\n1. the canonical `Model { Units: mm ... }` V2 parser/binder; and\n2. the supported Assembly relational parser for `Interface` plus `Assembly` source. M1 lets its Part tags apply declarations from the adjacent canonical V2 definition catalog.\n\nThis split is implementation structure, not two languages. `.firmasm` is a Legacy compatibility format and is not Firmament V2 architecture.\n\n## Lexical structure\n\nIdentifiers start with a letter or underscore and continue with letters, digits, or underscore. Keywords are case-sensitive in canonical syntax. `//` starts a line comment. Blocks use braces. Lists use brackets and comma separators. Member/path access uses `.`. Named fields use `:`. Template application uses `<...>`. `=>` belongs to Match arms, Template `Require`, and selected canonical projections—not general lambda syntax.\n\nNumeric literals are invariant-culture decimal/scientific numbers. Implemented engineering suffixes include `mm` and `deg`; canonical Models declare `Units: mm`. Primitive compile-time types are `Int`, `Float`, `Length`, `Angle`, `String`, and `Bool`; Concept IR additionally carries Point/Vector/Axis/Plane/Box/Region/PointSet values.\n\n## Models, values, and tolerances\n\n```firmament\nModel Example {\n    Units: mm\n    let Width: Length = 40mm tol PlusMinus(0.05mm)\n}\n```\n\n`Model` is the ordinary compilation root. `Units` establishes the document length unit. `let` declares an immutable compile-time scalar or record field; dependency evaluation is ordered by an acyclic expression graph. Arithmetic is typed. It is not runtime or mutable state.\n\n`tol` attaches an interval to a nominal Length/Angle value. The implemented canonical forms are bilateral `PlusMinus(value)` and asymmetric `PlusMinus(plus, minus)`; assembly-local `Dimension` and `Relation` also accept `tol 0.02mm` and `tol +0.03mm -0.02mm`. Internally all become nominal, lower, upper, and unit. Arithmetic that would silently lose tolerance is diagnosed. Canonical docs prefer `PlusMinus(...)` in Models and the explicit `+... -...` assembly spelling where asymmetric.\n\nAn ordinary `let Length` is a compile-time scalar. An Assembly `Dimension` is a named engineering semantic that carries `DimensionalCapable`, an exact `TolerancedDimensionBinding`, provenance, and participation in fits/stackups.\n\n## Records, Static Tables, and `with`\n\n```firmament\nRecord BlockSpec { Width: Length Height: Length Depth: Length }\nStatic Table Blocks: BlockSpec Key: Width {\n    Width: [20mm, 40mm]\n    Height: [10mm, 15mm]\n    Depth: [20mm, 40mm]\n}\nStatic Base = Blocks[20mm]\nStatic Tall = Base with { Height: 15mm }\n```\n\n`Record` defines a structural compile-time product type. `Static Name: Type = Type { ... }` creates an immutable value. `Static Table` is a finite columnar compile-time collection with equal column lengths and an optional typed key. Indexing selects a row. `with` derives a new immutable record while rechecking fields and types. Record, row, derivation, and Template argument provenance survive Template expansion and now survive into Assembly definition artifacts.\n\n## Concepts, Structs, and semantic exposure\n\n`Concept` defines a structural contract for one value/type. `Struct Name: Concept { ... }` and `Concept Struct` bind members and validate structural conformance. A materialized Struct may contain primitives/features and an `Expose` block. Exposed members form its public semantic surface and carry stable IDs into Concept IR.\n\n`satisfies` has one implemented meaning: a Template type parameter must structurally conform to a Concept (`type T satisfies C`). `requires` is not its synonym. Lowercase `requires` belongs to Assembly Role capability requirements. Capitalized `Require` is a compile-time predicate/constraint declaration. These spellings are intentionally distinct and are not interchangeable.\n\nAssembly `Semantic Name { ... }` is a first-class exposed semantic member group on a Part definition/instance. It creates a named `SemanticValue` namespace with structural capabilities aggregated from its members. It is not a `Struct`, a runtime object, or a Concept declaration. M1 Template parts obtain the same normalized seam from their ordinary `Expose` block, currently under the generated `Interface` group.\n\n## Point, Axis, Plane, and Dimension\n\nAssembly-local exact datum syntax is:\n\n```firmament\nSemantic Joint {\n    Point Origin = [0,0,0];\n    Axis Axis = [0,0,0] -> [0,0,1];\n    Plane Seat = [0,0,10] normal [0,0,1];\n    Dimension Diameter = 20mm tol +0.01mm -0.008mm;\n}\n```\n\n- `Point` is a definition-local millimetre coordinate and produces PointCapable + ExactPoint.\n- `Axis` stores a definition-local origin and direction. M0/M1 accept the point-to-direction form above; the direction is normalized by placement/query consumers. It produces AxisCapable + ExactAxis.\n- `Plane` stores a definition-local origin and oriented normal and produces PlaneCapable + ExactPlane. Coincidence currently treats opposite normals as angularly coincident; material-side semantics are not inferred.\n- `Dimension` stores a named nominal scalar interval and produces DimensionalCapable. An optional direction string exists in the semantic binding but Assembly syntax does not author it yet.\n\nCanonical Concept IR also produces exact Point3/Axis/Plane/Length values from expressions such as `Bounds.Center.Axis(+Z)` and `Bounds.Face(+Z)`. M1 converts Template-exposed values into the same Assembly capability/binding seam and composes them with the instance transform for world queries.\n\n## Profiles, Concept Path, Compose, and Modify\n\n`Concept Path` is a compile-time ordered planar construction (`Start`, `Heading`, named `Line`/`Arc`, `Close`). Validation establishes continuity, positive lengths, winding, and a stable provenance identity. `Profile Name From Path` converts an admitted closed path to exact `ResolvedProfile2D` semantics.\n\n`Compose` builds a named bounded constructive body from ordered operations such as profile stock/extrusion. `Modify Target` applies admitted feature families to an already-bound body. Supported families include semantic Hole variants (Shaft, Counterbore, Countersink with ThroughAll/Depth policies), bounded Slot/profile operations, Pattern, and EdgeFinish routes. Support is intentionally route-specific; diagnostics reject unsupported surface/termination/topology combinations rather than claiming a general CAD operation.\n\n`Selection` names a typed, validated set from an exposed/profile/body source and a bounded `Require` such as closed-loop selection. It is semantic selection—not backend topology-ID scripting.\n\n## Templates, Match, Pattern, and Require\n\n```firmament\nTemplate < Spec: BlockSpec, type T satisfies PrismaticBody >\nStruct Block: BlockConcept {\n    Require Positive => Spec.Width > 0mm\n    // compile-time Match and materialized declarations\n}\nStruct Part = Block < Spec: Standard, T: Box >\n```\n\nTemplates accept typed value/Record parameters, type parameters constrained with `satisfies`, and typed defaults. Binding diagnoses missing/unknown/mismatched arguments, default cycles, failed `Require`, and recursive specialization. `Match` is finite compile-time selection over admitted enum/static values. `Pattern` expands a bounded static source into deterministic generated declarations. Specialization occurs before feature AIR and records arguments, defaults, selected Match arms, Record/Table provenance, source spans, and a deterministic specialization identity.\n\n`Require Name => BoolExpression` gates Template/static expansion. Canonical semantic `Require` records may also validate an expected engineering value and project limited PMI. Assembly `Assert ToleranceStackup` uses a `Require: Clearance >= ...` field but is a distinct assertion grammar.\n\n## SemanticReference and SemanticValue\n\nConcept paths and exposed names resolve to `SemanticReference` (value + resolved path + consumer span). The normalized `SemanticValue` carries a stable identity, structural capabilities, exact bindings, exposed children, authored/generated spans, and ordered provenance.\n\nSupported producers are native Firmament concepts/profiles, Template expansion, bounded InlineStep/Recognize, and Forge extensions. Consumers include Profiles/Compose, Selection/Modify, FEA regions, and Assembly Roles. Capability checks are origin-independent. Exact-capability claims require an exact binding.\n\n## InlineStep, Recognize, and Replace\n\n`InlineStep` imports only canonical, exact AP242 accepted by the current importer. `Recognize` attaches bounded region semantics to verified imported face IDs with evidence/confidence; it does not recover arbitrary design history. Recognized values currently expose boundary/selectable/exact/analysis/modify capabilities. `Replace` supports a bounded recognized through-hole rematerialization workflow with verification. Because recognizers do not currently emit AxisCapable/PlaneCapable/DimensionalCapable, recognized regions cannot yet fill those Assembly Roles.\n\n## Forge\n\nForge concepts are registered typed capabilities with field descriptors. A Forge producer can return validated SemanticValues. Assembly and other consumers dispatch by capability and exact binding, not by Forge/native origin. General arbitrary source-level capability call syntax remains Experimental; the supported public seam is the Forge host/SDK integration and registered concept application tested in the repository.\n\n## FEA analysis language\n\n`Analysis Name { ... }` is parsed by the FEA compiler. The supported bounded declaration includes a source model/InlineStep resource, one isotropic material (elastic modulus and Poisson ratio), fixed-displacement regions, traction vectors, resultant-force vectors, pressure scalars, and requested fields from Displacement, Strain, Stress, and ReactionForce. Regions must resolve through exact semantic bindings. This is compile/lower support to AnalysisIR and solver input, not Assembly FEA.\n\n## Interfaces, Mates, and Assemblies\n\n`Concept` is unary structural semantics; `Interface` is an independent relational contract over named Roles.\n\n```firmament\nInterface SeatedAxis {\n    Role Fixed requires AxisCapable, PlaneCapable;\n    Role Moving requires AxisCapable, PlaneCapable;\n    Lower AxisCoincident Moving.Axis Fixed.Axis;\n    Lower PlaneCoincident Moving.Seat Fixed.Seat;\n    Allow rotation:about-axis;\n}\n```\n\n`Role ... requires ...` states the required capabilities of another semantic participant. `Lower` declares a bounded relational consequence: AxisCoincident, AxisAligned, PlaneCoincident, PointCoincident, or OffsetAlongAxis. It is not a user-defined compiler pass. `Fit A.Diameter inside B.Diameter` evaluates a typed clearance interval and now contributes a typed Mate/Interface dimensional transition. It does not implement ISO fit classes. `Allow` admits a remaining solver freedom (`rotation:about-axis` or `translation:along-axis`); it is neither tolerance relaxation nor multiplicity.\n\nAn `Assembly` body contains one XML-like product tree, an `Anchor`, independent `Mate` declarations, optional explicit `Relation`s, and stackup assertions. Part definitions are named after `=`; M1 also admits one Template application, for example `<Part P = Block<Spec: Standard>></Part>`. `Anchor` selects the instance datum whose owning Part receives identity placement. A final transform is a lowered result from Anchor + Mates.\n\n`Relation Name: A -> B = nominal tol ... from \"provenance\";` is a bounded directed dimensional edge, not an unrestricted equation graph. `Assert ToleranceStackup` finds one deterministic path, sums signed worst-case intervals, retains every contribution, and emits a typed compile failure if its clearance minimum is not met.\n\n## Assertions\n\n- `Assert Volume`: canonical Model assertion evaluated after exact STEP reimport/mass properties; authoritative routes fail the build on mismatch.\n- `Assert ToleranceStackup`: Assembly compile-time worst-case interval assertion with full relation provenance.\n- Historical V1 `expect` validation forms belong to the legacy frontend and are not canonical V2 assertions.\n\n## Status appendix\n\n| Status | Constructs |\n|---|---|\n| Supported | Model, Units, primitive literals/types, let, Record, Static Record/Table/array, indexing, with, Concept, Concept Struct, Struct, Expose, Concept Path, Profile, Compose, bounded Modify/Hole/Pattern/EdgeFinish/Selection, Template, Match, Require, InlineStep, bounded Recognize/Replace, PMI datum/diameter binding, Analysis declarations, SemanticValue, Interface/Role/Lower/Fit/Allow, Assembly/Part/Anchor/Mate/Relation/Dimension/tol, Assert Volume, Assert ToleranceStackup |\n| Experimental | standalone/fill lattice routes, broader PMI controls/export, general Forge source invocation, some Slot/EdgeFinish/Boolean/placement routes, M1 Template Part syntax while the central grammar remains split |\n| Internal-only | AIR/CIR/BRep plans, topology IDs, semantic source maps, Template expansion artifacts, Judgment/route machinery |\n| Legacy/Deprecated | Firmament V1 TOON-style fixture syntax, `.firmasm`, transform-first assembly execution, legacy lowercase/alternate PMI spellings accepted for compatibility |\n| Parser-only / dead | no syntax is promoted solely from an AST type; historical AST `FirmamentV2TemplateDecl` manufacturing-template representation and broad parser regex branches without binder/lowering evidence remain internal/legacy, not public Template syntax |\n| Future/incomplete | Template-authored subassemblies, native AP242 product structure/import, recognizer-produced datum/dimension capabilities, unrestricted symbolic relations, general kinematics/contact/assembly FEA |\n\nThe machine-readable status and source evidence are in `language-features.json` and `artifacts/language-audit-m1/`.\n\n",
+  "quickstart": "# Firmament V2 quickstart\n\nFirmament is Aetheris's statically evaluated, typed compiler metaprogramming language for engineering intent. The examples below use canonical source and real CLI commands. They are not a second tutorial-only dialect.\n\n## 1. Compile one exact part\n\n```firmament\nModel Plate {\n    Units: mm\n    Box Body { Size: [40mm, 20mm, 8mm] }\n}\n```\n\nSave the source as `plate.firmament`, then validate and build deterministic STEP AP242:\n\n```powershell\naetheris validate plate.firmament\naetheris build plate.firmament --output artifacts/plate.step --json\n```\n\n`Model` is the ordinary root and `Units: mm` establishes the document length unit. Exact BRep/STEP is the geometry result; the compiler also retains semantic and source evidence.\n\n## 2. Name engineering semantics\n\nConcepts and `Expose` publish stable semantic members instead of asking downstream tools to rediscover anonymous topology. Canonical Concept IR expressions include `Bounds.Center.Axis(+Z)` and `Bounds.Face(+Z)`. Assembly-local semantics use explicit datums:\n\n```firmament\nSemantic Joint {\n    Point Origin = [0,0,0];\n    Axis Axis = [0,0,0] -> [0,0,1];\n    Plane Seat = [0,0,10] normal [0,0,1];\n    Dimension Diameter = 20mm tol +0.01mm -0.008mm;\n}\n```\n\nPoint, Axis, Plane, and Dimension carry capabilities plus exact bindings. Part occurrences compose those local bindings with their instance transforms.\n\n## 3. Move parameters into typed values and Records\n\n`let` is immutable compile-time data. `tol` is a symbolic interval; it never randomly perturbs nominal geometry.\n\n```firmament\nRecord BlockSpec {\n    Width: Length\n    Depth: Length\n    Height: Length\n}\n\nStatic Standard: BlockSpec = BlockSpec {\n    Width: 20mm\n    Depth: 20mm\n    Height: 10mm\n}\n\nStatic Tall = Standard with { Height: 15mm }\n```\n\n`with` creates a new value and rechecks the field names and types. The derivation remains in specialization provenance.\n\n## 4. Put finite standards data in a Static Table\n\n```firmament\nStatic Table Blocks: BlockSpec Key: Width {\n    Width: [20mm, 40mm]\n    Depth: [20mm, 40mm]\n    Height: [10mm, 15mm]\n}\n\nStatic Small = Blocks[20mm]\n```\n\nColumns must have the same length and keyed lookup is typed. The complete Table/Template/Profile example is `fixtures/FirmamentV2/Canonical/valid/table-template-concept-path-compose.firmament`.\n\n## 5. Specialize a Template\n\n```firmament\nTemplate < Spec: BlockSpec >\nStruct AssemblyBlock: AssemblyBlockConcept {\n    Require Positive => Spec.Width > 0mm && Spec.Depth > 0mm && Spec.Height > 0mm\n    Concept Struct Design: AssemblyBlockConcept {\n        Bounds: Box3 { Size: [Spec.Width, Spec.Depth, Spec.Height] }\n        Axis: Bounds.Center.Axis(+Z)\n        Seat: Bounds.Face(+Z)\n        Height: Spec.Height\n    }\n    Box Body { Bounds: Design.Bounds }\n    Expose {\n        Bounds: Design.Bounds\n        Axis: Design.Axis\n        Seat: Design.Seat\n        Height: Design.Height\n    }\n}\n```\n\nTemplate binding checks fields, types, defaults, `Require`, and recursion before feature AIR. The compiler records arguments, defaults, Match arms, source spans, and Record/Table provenance.\n\n## 6. Build a Profile and Compose it\n\nUse `Concept Path` for named ordered planar motion, convert a valid closed Path to a Profile, then use the ordinary Compose/Modify lanes. The canonical complete source is `fixtures/FirmamentV2/Canonical/valid/table-template-concept-path-compose.firmament`.\n\nThis separation is useful: Path captures construction intent, Profile is admitted exact planar geometry, Compose builds a body, and Modify applies a supported semantic feature route.\n\n## 7. Bring in existing STEP\n\nThe complete `fixtures/FirmamentV2/Canonical/valid/inline-step-recognize-replace.firmament` workflow performs:\n\n```text\nInlineStep -> Recognize -> SemanticValue -> bounded Replace\n```\n\nRecognition binds verified imported face IDs to named semantic regions with evidence. It does not promise arbitrary feature-history recovery. A recognized value can enter Selection, PMI, Modify, or FEA only when its capabilities and exact binding meet that consumer's contract.\n\n## 8. Add a linear-elastic Analysis\n\n`docs/fea/artifacts/m5/plate-with-hole.firmament` is the canonical native plate-with-hole benchmark. Its `Analysis` declares one isotropic material, semantic fixed/load regions, and requested results.\n\n```powershell\naetheris fea docs/fea/artifacts/m5/plate-with-hole.firmament --out-dir artifacts/plate-fea --json\n```\n\nThe command writes AnalysisIR, native displacement/stress results, diagnostics/metrics, and an Abaqus `.inp` verification deck. No commercial Abaqus execution is claimed; running Abaqus requires the user's installation.\n\n## 9. Assemble Template-produced parts\n\n`fixtures/AssemblyM1/template-block-pair.firmament` turns two Static Records into Template-produced Part definitions, instantiates them in one product tree, and relates their exposed semantics through an Interface and Mate.\n\n```powershell\naetheris asm inspect fixtures/AssemblyM1/template-block-pair.firmament --json\n```\n\nThe report distinguishes reusable definitions from occurrences and includes transforms, world bounds, Mate residuals, dimensional transitions, and Template/Record provenance.\n\n## 10. Assert a worst-case tolerance path\n\n`fixtures/AssemblyM0/bearing-module.firmament` combines Shaft/Bore and seated-axis Interfaces with explicit dimensional Relations:\n\n```firmament\nAssert ToleranceStackup AxialReach {\n    Between: [BearingModule.FixedSupport.Housing.Datum, BearingModule.Rotor.Shaft.Shoulder];\n    Require: Clearance >= 44.90mm;\n}\n```\n\nThe compiler finds one deterministic path, propagates signed nominal/lower/upper intervals, retains every contribution and provenance string, and fails compilation when the minimum clearance is not met. `bearing-module-failing.firmament` is the intentional negative proof.\n\nContinue with the [definitive language reference](language-reference.md) for exact syntax/status, then use `language-features.json` as the machine-readable feature contract.\n",
+  "languageFeatures": [
+    {
+      "name": "Model and Units",
+      "keywords": ["Model", "Units"],
+      "status": "Supported",
+      "produces": "FirmamentV2Document",
+      "consumers": ["FirmamentBuildAndExport"],
+      "docs": "language-reference.md#models-values-and-tolerances",
+      "evidence": ["FirmamentV2Parser.cs", "FirmamentV2ParserTests.cs"]
+    },
+    {
+      "name": "let and typed expressions",
+      "keywords": ["let"],
+      "status": "Supported",
+      "produces": "FirmamentV2BoundLet",
+      "consumers": ["static binder", "PMI", "templates"],
+      "docs": "language-reference.md#models-values-and-tolerances",
+      "evidence": ["FirmamentV2Ast.cs", "FirmamentV2StaticLogicTests.cs"]
+    },
+    {
+      "name": "tol",
+      "keywords": ["tol", "PlusMinus"],
+      "status": "Supported",
+      "produces": "nominal interval",
+      "consumers": ["PMI", "AssemblyIR", "stackup"],
+      "docs": "language-reference.md#models-values-and-tolerances",
+      "evidence": ["FirmamentV2Ast.cs", "AssemblyM0Tests.cs"]
+    },
+    {
+      "name": "Record Static Table with",
+      "keywords": ["Record", "Static", "Table", "Key", "with"],
+      "status": "Supported",
+      "produces": "compile-time records/rows",
+      "consumers": ["Template expansion"],
+      "docs": "language-reference.md#records-static-tables-and-with",
+      "evidence": [
+        "CanonicalStaticAuthoring.cs",
+        "FirmamentV2StaticTablesWithM1Tests.cs"
+      ]
+    },
+    {
+      "name": "Concept",
+      "keywords": ["Concept"],
+      "status": "Supported",
+      "produces": "structural contract",
+      "consumers": ["ConceptIrResolver", "Template constraints"],
+      "docs": "language-reference.md#concepts-structs-and-semantic-exposure",
+      "evidence": ["ConceptIr.cs", "FirmamentV2ConceptExpansionTests.cs"]
+    },
+    {
+      "name": "Struct and Concept Struct",
+      "keywords": ["Struct", "Concept Struct"],
+      "status": "Supported",
+      "produces": "ConceptIr struct/materialized struct",
+      "consumers": ["feature AIR", "SemanticValue"],
+      "docs": "language-reference.md#concepts-structs-and-semantic-exposure",
+      "evidence": ["ConceptIr.cs", "FirmamentV2TemplateExpansionTests.cs"]
+    },
+    {
+      "name": "Expose",
+      "keywords": ["Expose"],
+      "status": "Supported",
+      "produces": "public semantic members",
+      "consumers": ["SemanticReference", "Assembly M1"],
+      "docs": "language-reference.md#concepts-structs-and-semantic-exposure",
+      "evidence": ["ConceptIr.cs", "AssemblyM1Tests.cs"]
+    },
+    {
+      "name": "Point Axis Plane",
+      "keywords": ["Point", "Axis", "Plane"],
+      "status": "Supported",
+      "produces": "exact datum SemanticValues",
+      "consumers": ["placement", "Assembly world query"],
+      "docs": "language-reference.md#point-axis-plane-and-dimension",
+      "evidence": [
+        "AssemblyM0Parser.cs",
+        "SemanticModel.cs",
+        "AssemblyM1Tests.cs"
+      ]
+    },
+    {
+      "name": "Dimension",
+      "keywords": ["Dimension"],
+      "status": "Supported",
+      "produces": "DimensionalCapable interval",
+      "consumers": ["Fit", "tolerance graph"],
+      "docs": "language-reference.md#point-axis-plane-and-dimension",
+      "evidence": ["AssemblyM0Parser.cs", "AssemblyM0Tests.cs"]
+    },
+    {
+      "name": "Concept Path",
+      "keywords": ["Concept Path", "Start", "Heading", "Line", "Arc", "Close"],
+      "status": "Supported",
+      "produces": "validated path semantic",
+      "consumers": ["Profile", "Compose"],
+      "docs": "language-reference.md#profiles-concept-path-compose-and-modify",
+      "evidence": [
+        "ConceptPathAst.cs",
+        "FirmamentV2CanonicalAdvancedGrammarTests.cs"
+      ]
+    },
+    {
+      "name": "Profile and Compose",
+      "keywords": ["Profile", "Compose"],
+      "status": "Supported",
+      "produces": "ResolvedProfile2D/constructive body",
+      "consumers": ["AIR materializers"],
+      "docs": "language-reference.md#profiles-concept-path-compose-and-modify",
+      "evidence": ["ProfileAuthoringParser.cs", "FirmamentV2BuildLowering.cs"]
+    },
+    {
+      "name": "Modify Hole Slot Pattern EdgeFinish",
+      "keywords": ["Modify", "Hole", "Slot", "Pattern", "EdgeFinish"],
+      "status": "Experimental",
+      "produces": "bounded feature AIR",
+      "consumers": ["route-specific BRep materializers"],
+      "docs": "language-reference.md#profiles-concept-path-compose-and-modify",
+      "evidence": ["FirmamentV2Parser.cs", "fixtures/FirmamentV2/Canonical"]
+    },
+    {
+      "name": "Selection",
+      "keywords": ["Selection", "Target", "Source", "Require"],
+      "status": "Supported",
+      "produces": "typed selection",
+      "consumers": ["Modify"],
+      "docs": "language-reference.md#profiles-concept-path-compose-and-modify",
+      "evidence": ["FirmamentV2Ast.cs", "FirmamentV2CanonicalGrammarTests.cs"]
+    },
+    {
+      "name": "Template",
+      "keywords": ["Template"],
+      "status": "Supported",
+      "produces": "deterministic specialization",
+      "consumers": ["Concept IR", "Assembly M1"],
+      "docs": "language-reference.md#templates-match-pattern-and-require",
+      "evidence": [
+        "FirmamentV2TemplateExpansion.cs",
+        "FirmamentV2TemplateExpansionTests.cs"
+      ]
+    },
+    {
+      "name": "Match Pattern Require",
+      "keywords": ["Match", "Pattern", "Require"],
+      "status": "Supported",
+      "produces": "compile-time selection/expansion/gate",
+      "consumers": ["Template expansion"],
+      "docs": "language-reference.md#templates-match-pattern-and-require",
+      "evidence": [
+        "CanonicalStaticAuthoring.cs",
+        "FirmamentV2TemplatePatternTests.cs"
+      ]
+    },
+    {
+      "name": "satisfies",
+      "keywords": ["satisfies"],
+      "status": "Supported",
+      "produces": "Template type conformance constraint",
+      "consumers": ["Template binder"],
+      "docs": "language-reference.md#concepts-structs-and-semantic-exposure",
+      "evidence": ["FirmamentV2TemplateExpansion.cs"]
+    },
+    {
+      "name": "SemanticValue",
+      "keywords": [],
+      "status": "Supported",
+      "produces": "capability/binding/provenance graph",
+      "consumers": ["Profile", "Modify", "FEA", "Assembly"],
+      "docs": "language-reference.md#semanticreference-and-semanticvalue",
+      "evidence": ["SemanticModel.cs", "FirmamentSemanticValues.cs"]
+    },
+    {
+      "name": "InlineStep Recognize Replace",
+      "keywords": ["InlineStep", "Recognize", "Replace"],
+      "status": "Supported",
+      "produces": "bounded exact imported semantic regions",
+      "consumers": ["Modify", "PMI", "FEA"],
+      "docs": "language-reference.md#inlinestep-recognize-and-replace",
+      "evidence": ["FirmamentV2Parser.cs", "FirmamentV2InlineStepTests.cs"]
+    },
+    {
+      "name": "PMI",
+      "keywords": [
+        "PMI",
+        "Datum",
+        "HoleDiameter",
+        "Distance",
+        "Flatness",
+        "Parallel",
+        "Perpendicular",
+        "Coplanar"
+      ],
+      "status": "Experimental",
+      "produces": "bound PMI records",
+      "consumers": ["AP242 datum/diameter export"],
+      "docs": "language-reference.md#inlinestep-recognize-and-replace",
+      "evidence": ["FirmamentV2Parser.cs", "FirmamentPmiTests.cs"]
+    },
+    {
+      "name": "Forge concepts",
+      "keywords": [],
+      "status": "Experimental",
+      "produces": "typed extension values/SemanticValues",
+      "consumers": ["ForgeHost", "Assembly"],
+      "docs": "language-reference.md#forge",
+      "evidence": ["FirmamentV2ForgeRuntime.cs", "AssemblyM0Tests.cs"]
+    },
+    {
+      "name": "FEA Analysis",
+      "keywords": [
+        "Analysis",
+        "material",
+        "fixed",
+        "traction",
+        "force",
+        "pressure",
+        "results"
+      ],
+      "status": "Supported",
+      "produces": "AnalysisIR",
+      "consumers": ["FEA solver adapters"],
+      "docs": "language-reference.md#fea-analysis-language",
+      "evidence": ["FirmamentAnalysisCompiler.cs", "Aetheris.FEA.Tests"]
+    },
+    {
+      "name": "Semantic group",
+      "keywords": ["Semantic"],
+      "status": "Supported",
+      "produces": "instance-scoped SemanticValue namespace",
+      "consumers": ["Assembly Roles"],
+      "docs": "language-reference.md#concepts-structs-and-semantic-exposure",
+      "evidence": ["AssemblyM0Parser.cs", "bearing-module.firmament"]
+    },
+    {
+      "name": "Interface Role",
+      "keywords": ["Interface", "Role", "requires"],
+      "status": "Supported",
+      "produces": "relational role contract",
+      "consumers": ["Mate binder"],
+      "docs": "language-reference.md#interfaces-mates-and-assemblies",
+      "evidence": ["AssemblyM0Parser.cs", "AssemblyM0Tests.cs"]
+    },
+    {
+      "name": "Lower Fit Allow",
+      "keywords": ["Lower", "Fit", "Allow"],
+      "status": "Supported",
+      "produces": "placement/dimensional consequences and admitted freedoms",
+      "consumers": ["placement solver", "tolerance graph"],
+      "docs": "language-reference.md#interfaces-mates-and-assemblies",
+      "evidence": ["AssemblyM0Compiler.cs", "AssemblyM1Tests.cs"]
+    },
+    {
+      "name": "Assembly Part Anchor Mate",
+      "keywords": ["Assembly", "Part", "Anchor", "Mate"],
+      "status": "Supported",
+      "produces": "AssemblyIR product tree and Mate graph",
+      "consumers": ["Assembly M0/M1 pipelines", "CLI"],
+      "docs": "language-reference.md#interfaces-mates-and-assemblies",
+      "evidence": ["AssemblyM0Parser.cs", "AssemblyM0Tests.cs"]
+    },
+    {
+      "name": "Template Part application",
+      "keywords": ["Part", "Template"],
+      "status": "Experimental",
+      "produces": "materialized reusable definition and occurrence",
+      "consumers": ["AssemblyM1Pipeline"],
+      "docs": "language-reference.md#interfaces-mates-and-assemblies",
+      "evidence": ["AssemblyM1Execution.cs", "AssemblyM1Tests.cs"]
+    },
+    {
+      "name": "Relation",
+      "keywords": ["Relation"],
+      "status": "Supported",
+      "produces": "bounded dimensional graph edge",
+      "consumers": ["ToleranceStackup"],
+      "docs": "language-reference.md#interfaces-mates-and-assemblies",
+      "evidence": ["AssemblyM0Compiler.cs", "bearing-module.firmament"]
+    },
+    {
+      "name": "Assert Volume",
+      "keywords": ["Assert", "Volume"],
+      "status": "Supported",
+      "produces": "authoritative volume result",
+      "consumers": ["Firmament build gate"],
+      "docs": "language-reference.md#assertions",
+      "evidence": [
+        "FirmamentV2VolumeAssertions.cs",
+        "FirmamentV2VolumeAssertionTests.cs"
+      ]
+    },
+    {
+      "name": "Assert ToleranceStackup",
+      "keywords": ["Assert", "ToleranceStackup"],
+      "status": "Supported",
+      "produces": "worst-case stackup result",
+      "consumers": ["Assembly compile gate"],
+      "docs": "language-reference.md#assertions",
+      "evidence": ["AssemblyM0Compiler.cs", "AssemblyM0Tests.cs"]
+    },
+    {
+      "name": "Lattice Fill",
+      "keywords": ["Fill", "Lattice"],
+      "status": "Experimental",
+      "produces": "bounded lattice plan/BRep",
+      "consumers": ["specialized materializers"],
+      "docs": "language-reference.md#status-appendix",
+      "evidence": [
+        "FirmamentV2DfmEnforcement.cs",
+        "FirmamentV2StandaloneCubicLatticeTests.cs"
+      ]
+    },
+    {
+      "name": "legacy firmasm",
+      "keywords": [],
+      "status": "Deprecated",
+      "produces": "transform-first compatibility assembly",
+      "consumers": ["FirmasmAssemblyExecutor"],
+      "docs": "../assembly/assembly-m1.md#current-boundary",
+      "evidence": [
+        "FirmasmManifestLoader.cs",
+        "FirmasmAssemblyExecutorTests.cs"
+      ]
+    },
+    {
+      "name": "Template subassembly",
+      "keywords": ["Template", "Assembly"],
+      "status": "Future / incomplete",
+      "produces": "none",
+      "consumers": [],
+      "docs": "../assembly/assembly-m1.md#current-boundary",
+      "evidence": []
+    },
+    {
+      "name": "native AP242 assembly structure",
+      "keywords": [],
+      "status": "Future / incomplete",
+      "produces": "none",
+      "consumers": [],
+      "docs": "../assembly/artifacts/m1/ap242-audit.md",
+      "evidence": ["Step242Exporter.cs"]
+    }
+  ],
+  "platformFeatures": [
+    {
+      "id": "concept-path-planar-construction",
+      "status": "Supported",
+      "reason": "Typed ordered Line/Arc/Close construction with stable guide and endpoint identities."
+    },
+    {
+      "id": "concept-path-profile",
+      "status": "Supported",
+      "reason": "Normalizes to validated ResolvedProfile2D without flattening or backend syntax branches."
+    },
+    {
+      "id": "concept-path-profile-compose",
+      "status": "Supported",
+      "reason": "Path-derived Profiles use the ordinary Compose operand dictionary and exact section-stack path."
+    },
+    {
+      "id": "concept-path-profile-selection",
+      "status": "Bounded",
+      "reason": "Named ProfileSegments/Loop selection is supported; selection is not arbitrary path traversal."
+    },
+    {
+      "id": "template-record-table-path-compose",
+      "status": "Supported",
+      "reason": "Expansion precedes binding; fixture retains specialization and input provenance."
+    },
+    {
+      "id": "general-semantic-member-path",
+      "status": "Bounded",
+      "reason": "Compiler-owned SemanticValue/SemanticReference spans Concept IR, Concept Path, Recognize, Forge, Selection, bounded Modify and FEA; only explicitly exposed members are navigable."
+    },
+    {
+      "id": "inline-step-recognize-semantic-path",
+      "status": "Supported",
+      "reason": "Existing Recognize regions preserve canonical STEP/FaceId evidence and can enter structured member paths, Selection and FEA; no exact-profile recognition is implied."
+    },
+    {
+      "id": "fea-linear-elasticity",
+      "status": "Supported",
+      "reason": "Native and canonical imported bounded domains, exact planar constraints, traction, force, and pressure work."
+    },
+    {
+      "id": "fea-curved-nonlinear-contact-dynamics",
+      "status": "Unsupported",
+      "reason": "Curved weak constraints, nonlinear mechanics, contact, and dynamics are future formulations."
+    },
+    {
+      "id": "surface-mesh-ir",
+      "status": "Bounded",
+      "reason": "Analytic supports, planar holes/bands, Hyperbola and sampled non-rational B-spline trims, STL and OBJ; no NURBS support surfaces."
+    },
+    {
+      "id": "continuum-authority",
+      "status": "Supported",
+      "reason": "BRep exact topology and CIR occupancy dual-lower from shared constructive intent; SDF is a CIR backend."
+    },
+    {
+      "id": "arbitrary-representation-recovery",
+      "status": "Unsupported",
+      "reason": "Arbitrary BRep-to-CIR and CIR/SDF-to-exact-BRep are not assumed."
+    },
+    {
+      "id": "forge-template-hosting",
+      "status": "Supported",
+      "reason": "Typed Template invocation, artifact validation, imported resources, and deterministic provenance."
+    },
+    {
+      "id": "forge-construction-extension",
+      "status": "Bounded",
+      "reason": "Trusted explicitly registered capabilities, one construct output, bounded standard prism or validated ExactBrep."
+    },
+    {
+      "id": "forge-semantic-output",
+      "status": "Supported",
+      "reason": "Capabilities may expose validated SemanticValue roots/members; SecretGeometry exact faces use ordinary path, Selection and FEA consumers."
+    },
+    {
+      "id": "forge-general-assembly-loft-sourcegen",
+      "status": "Unsupported",
+      "reason": "Multi-body/general loft/nested host Record/source generator/plugin discovery are not production features."
+    },
+    {
+      "id": "mixed-profile-whole-loop-fillet",
+      "status": "Experimental",
+      "reason": "Exact shell executes but curved-trim certified volume envelopes remain release-loose."
+    }
+  ],
+  "fixtures": {
+    "bareBox": {
+      "path": "fixtures/FirmamentV2/Canonical/valid/bare-box.firmament",
+      "source": "Model BareBox {\n    Units: mm\n\n    Box Base {\n        Size: [80mm, 50mm, 25mm]\n    }\n    Assert Volume Base {\n        Expected: 100000mm^3\n        Tolerance: 0mm^3\n        Note: \"Rectangular stock\"\n    }\n}\n"
+    },
+    "tableTemplate": {
+      "path": "fixtures/FirmamentV2/Canonical/valid/table-template-concept-path-compose.firmament",
+      "source": "Model TableTemplateConceptPathCompose {\n    Units: mm\n    Enum PlateKind { Small Large }\n    Record PlateStandard {\n        Kind: PlateKind\n        Width: Length\n        Height: Length\n    }\n    Record PlateSpec {\n        Standard: PlateStandard\n        Thickness: Length\n    }\n    Static Table PlateStandards: PlateStandard Key: Kind {\n        Kind: [Small, Large]\n        Width: [40mm, 80mm]\n        Height: [20mm, 30mm]\n    }\n    Static SmallStandard = PlateStandards[Small]\n    Static BaseSpec: PlateSpec = PlateSpec {\n        Standard: SmallStandard\n        Thickness: 8mm\n    }\n    Static ThickSmall = BaseSpec with {\n        Thickness: 10mm\n    }\n    Template < Spec: PlateSpec >\n    Struct PlateTemplate {\n        Require Positive => Spec.Standard.Width > 0mm && Spec.Standard.Height > 0mm && Spec.Thickness > 0mm\n        Concept Path Outline {\n            Start: Point2(0mm, 0mm)\n            Heading: 0deg\n            Line South { Length: Spec.Standard.Width }\n            Line East { Turn: 90deg; Length: Spec.Standard.Height }\n            Line North { Turn: 90deg; Length: Spec.Standard.Width }\n            Close West\n        }\n        Profile PlateProfile From Outline\n        Compose Body {\n            Base Stock { Profile: PlateProfile; From: 0mm; To: Spec.Thickness; Role: Stock }\n        }\n        Selection TopBoundary {\n            Target: TopBoundary\n            Source: PlateProfile.ProfileSegments([South, East, North, West])\n            Require: ClosedLoop\n        }\n    }\n    Struct Plate = PlateTemplate < Spec: ThickSmall >\n}\n"
+    },
+    "bearingModule": {
+      "path": "fixtures/AssemblyM0/bearing-module.firmament",
+      "source": "// AETHERIS-ASSEMBLY-M0: typed Interfaces plus a product tree and independent Mate graph.\nInterface ShaftBore {\n    Role Shaft requires AxisCapable, DimensionalCapable;\n    Role Bore requires AxisCapable, DimensionalCapable;\n    Lower AxisCoincident Shaft.Axis Bore.Axis;\n    Fit Shaft.Diameter inside Bore.Diameter;\n    Allow translation:along-axis;\n    Allow rotation:about-axis;\n}\n\nInterface ShoulderBearingSeat {\n    Role Shoulder requires AxisCapable, PlaneCapable;\n    Role Seat requires AxisCapable, PlaneCapable;\n    Lower AxisCoincident Shoulder.Axis Seat.Axis;\n    Lower PlaneCoincident Shoulder.Seat Seat.Seat;\n    Allow rotation:about-axis;\n}\n\nAssembly BearingModule {\n    <Assembly BearingModule>\n        <Assembly FixedSupport>\n            <Part Housing = HousingPart>\n                Semantic Bore {\n                    Axis Axis = [0,0,0] -> [0,0,1];\n                    Dimension Diameter = 20.04mm tol +0.02mm -0.01mm;\n                }\n                Semantic SeatInterface {\n                    Axis Axis = [0,0,0] -> [0,0,1];\n                    Plane Seat = [0,0,30] normal [0,0,1];\n                }\n                Semantic Datum { Point Point = [0,0,0]; }\n                Semantic SeatDatum { Point Point = [0,0,30]; }\n            </Part>\n            <Part Bearing = Bearing6204>\n                Semantic Bore {\n                    Axis Axis = [0,0,0] -> [0,0,1];\n                    Dimension Diameter = 20.00mm tol +0.00mm -0.008mm;\n                }\n                Semantic Left { Point Point = [0,0,0]; }\n                Semantic Right { Point Point = [0,0,10]; }\n            </Part>\n        </Assembly>\n        <Assembly Rotor>\n            <Part Spacer = SpacerPart>\n                Semantic Left { Point Point = [0,0,0]; }\n                Semantic Right { Point Point = [0,0,5]; }\n            </Part>\n            <Part Shaft = ShaftPart>\n                Semantic Journal {\n                    Axis Axis = [0,0,0] -> [0,0,1];\n                    Dimension Diameter = 19.98mm tol +0.01mm -0.01mm;\n                }\n                Semantic ShoulderInterface {\n                    Axis Axis = [0,0,0] -> [0,0,1];\n                    Plane Seat = [0,0,45] normal [0,0,1];\n                }\n                Semantic Shoulder { Point Point = [0,0,45]; }\n            </Part>\n        </Assembly>\n    </Assembly>\n\n    Anchor: BearingModule.FixedSupport.Housing.Bore;\n\n    Mate ShaftInBearing: ShaftBore {\n        Shaft: BearingModule.Rotor.Shaft.Journal;\n        Bore: BearingModule.FixedSupport.Bearing.Bore;\n    }\n\n    Mate ShaftShoulderAtHousing: ShoulderBearingSeat {\n        Shoulder: BearingModule.Rotor.Shaft.ShoulderInterface;\n        Seat: BearingModule.FixedSupport.Housing.SeatInterface;\n    }\n\n    Relation HousingSeatDepth: BearingModule.FixedSupport.Housing.Datum -> BearingModule.FixedSupport.Housing.SeatDatum = 30mm tol +0.05mm -0.04mm from \"HousingTable.H6204.SeatDepth\";\n    Relation HousingToBearing: BearingModule.FixedSupport.Housing.SeatDatum -> BearingModule.FixedSupport.Bearing.Left = 0mm from \"Mate:HousingBearingSeat\";\n    Relation BearingWidth: BearingModule.FixedSupport.Bearing.Left -> BearingModule.FixedSupport.Bearing.Right = 10mm tol 0.02mm from \"BearingTable.6204.Width\";\n    Relation BearingToSpacer: BearingModule.FixedSupport.Bearing.Right -> BearingModule.Rotor.Spacer.Left = 0mm from \"Mate:BearingSpacer\";\n    Relation SpacerWidth: BearingModule.Rotor.Spacer.Left -> BearingModule.Rotor.Spacer.Right = 5mm tol +0.03mm -0.02mm from \"SpacerTemplate.Width\";\n    Relation SpacerToShoulder: BearingModule.Rotor.Spacer.Right -> BearingModule.Rotor.Shaft.Shoulder = 0mm from \"Mate:SpacerShoulder\";\n\n    Assert ToleranceStackup AxialReach {\n        Between: [BearingModule.FixedSupport.Housing.Datum, BearingModule.Rotor.Shaft.Shoulder];\n        Require: Clearance >= 44.90mm;\n    }\n}\n"
+    },
+    "bearingModuleFailing": {
+      "path": "fixtures/AssemblyM0/bearing-module-failing.firmament",
+      "source": "// Deliberately failing bounded worst-case stackup proof.\nAssembly FailingBearingModule {\n    <Assembly FailingBearingModule>\n        <Part Housing = HousingPart>\n            Semantic Datum { Point Point = [0,0,0]; }\n            Semantic Seat { Point Point = [0,0,30]; }\n        </Part>\n        <Part Bearing = Bearing6204>\n            Semantic Left { Point Point = [0,0,0]; }\n            Semantic Right { Point Point = [0,0,10]; }\n        </Part>\n        <Part Spacer = SpacerPart>\n            Semantic Left { Point Point = [0,0,0]; }\n            Semantic Right { Point Point = [0,0,5]; }\n        </Part>\n    </Assembly>\n    Anchor: FailingBearingModule.Housing.Datum;\n    Relation SeatDepth: FailingBearingModule.Housing.Datum -> FailingBearingModule.Housing.Seat = 30mm tol +0.05mm -0.04mm from \"HousingTable.H6204.SeatDepth\";\n    Relation SeatTransition: FailingBearingModule.Housing.Seat -> FailingBearingModule.Bearing.Left = 0mm from \"Mate:Seat\";\n    Relation BearingWidth: FailingBearingModule.Bearing.Left -> FailingBearingModule.Bearing.Right = 10mm tol 0.02mm from \"BearingTable.6204.Width\";\n    Relation SpacerTransition: FailingBearingModule.Bearing.Right -> FailingBearingModule.Spacer.Left = 0mm from \"Mate:Spacer\";\n    Relation SpacerWidth: FailingBearingModule.Spacer.Left -> FailingBearingModule.Spacer.Right = 5mm tol +0.03mm -0.02mm from \"SpacerTemplate.Width\";\n    Assert ToleranceStackup ImpossibleClearance {\n        Between: [FailingBearingModule.Housing.Datum, FailingBearingModule.Spacer.Right];\n        Require: Clearance >= 44.95mm;\n    }\n}\n"
+    },
+    "templateBlockPair": {
+      "path": "fixtures/AssemblyM1/template-block-pair.firmament",
+      "source": "// Canonical M1 proof: Static Record -> Template specialization -> ordinary part -> Assembly instance.\nConcept AssemblyBlockConcept {\n    Bounds: Box3\n    Axis: Axis\n    Seat: Plane\n    Height: Length\n}\n\nRecord BlockSpec {\n    Width: Length\n    Depth: Length\n    Height: Length\n}\n\nStatic FixedSpec: BlockSpec = BlockSpec { Width: 20mm Depth: 20mm Height: 10mm }\nStatic MovingSpec: BlockSpec = BlockSpec { Width: 12mm Depth: 12mm Height: 15mm }\n\nTemplate < Spec: BlockSpec >\nStruct AssemblyBlock: AssemblyBlockConcept {\n    Require Positive => Spec.Width > 0mm && Spec.Depth > 0mm && Spec.Height > 0mm\n    Concept Struct Design: AssemblyBlockConcept {\n        Bounds: Box3 { Size: [Spec.Width, Spec.Depth, Spec.Height] }\n        Axis: Bounds.Center.Axis(+Z)\n        Seat: Bounds.Face(+Z)\n        Height: Spec.Height\n    }\n    Box Body { Bounds: Design.Bounds }\n    Modify Body {\n        EdgeFinish ProofBreak {\n            Face: Design.Seat\n            Target: Boundary\n            Kind: Chamfer\n            Distance: 1mm\n        }\n    }\n    Expose {\n        Bounds: Design.Bounds\n        Axis: Design.Axis\n        Seat: Design.Seat\n        Height: Design.Height\n    }\n}\n\nInterface SeatedAxis {\n    Role Fixed requires AxisCapable, PlaneCapable, DimensionalCapable;\n    Role Moving requires AxisCapable, PlaneCapable, DimensionalCapable;\n    Lower AxisCoincident Moving.Axis Fixed.Axis;\n    Lower PlaneCoincident Moving.Seat Fixed.Seat;\n    Fit Moving.Height inside Fixed.Height;\n    Allow rotation:about-axis;\n}\n\nAssembly TemplateBlockPair {\n    <Assembly TemplateBlockPair>\n        <Part Fixed = AssemblyBlock<Spec: FixedSpec>></Part>\n        <Part Moving = AssemblyBlock<Spec: MovingSpec>></Part>\n    </Assembly>\n\n    Anchor: TemplateBlockPair.Fixed.Interface;\n\n    Mate Seat: SeatedAxis {\n        Fixed: TemplateBlockPair.Fixed.Interface;\n        Moving: TemplateBlockPair.Moving.Interface;\n    }\n\n    Assert ToleranceStackup TemplateFitTransition {\n        Between: [TemplateBlockPair.Moving.Interface.Height, TemplateBlockPair.Fixed.Interface.Height];\n        Require: Clearance >= -5mm;\n    }\n}\n"
+    },
+    "plateWithHole": {
+      "path": "docs/fea/artifacts/m5/plate-with-hole.firmament",
+      "source": "// AETHERIS-FEA-M5 canonical SI-normalized plate-with-hole verification case.\nmodel PlateWithHoleModel {\n    units mm\n\n    solid plate: Box {\n        size: [200, 100, 10]\n    }\n\n    modify plate {\n        region hole on face(+Z) {\n            cut Cylinder {\n                radius: 10\n                through: face(-Z)\n            }\n        }\n    }\n\n    analysis LinearElastic PlateWithHole {\n        body: plate\n\n        material Steel {\n            youngsModulus: 200GPa\n            poissonRatio: 0.3\n            density: 7850kg/m3\n        }\n\n        fixed Clamp {\n            region: plate.face(-X)\n            components: [X, Y, Z]\n        }\n\n        force Tension {\n            region: plate.face(+X)\n            vector: [10000N, 0N, 0N]\n        }\n\n        results: [Displacement, Strain, Stress, ReactionForce]\n        lattice: [16, 8, 2]\n    }\n}\n"
+    },
+    "inlineStep": {
+      "path": "fixtures/FirmamentV2/Canonical/valid/inline-step-recognize-replace.firmament",
+      "source": "Model InlineStepRecognizeReplace {\n    Units: mm\n\n    InlineStep Source {\n        Path: \"../../InlineStep/testdata/canonical-through-hole.step\"\n    }\n\n    Recognize Source {\n        Region MountHole {\n            Kind: HoleShaft\n            Confidence: High\n            Faces: [7]\n            Evidence: {\n                SurfaceFamily: Cylindrical\n                Radius: 1mm\n                Through: true\n            }\n        }\n    }\n\n    Replace Source.MountHole With Hole<Shaft> MountHole {\n        On: Source.Face(7)\n        Center: Point2(0mm, 0mm)\n        Diameter: 2mm\n        End: ThroughAll\n        HostSize: [10mm, 8mm, 6mm]\n    }\n}\n"
+    },
+    "hexBolt": {
+      "path": "testdata/firmament/examples/hexbolt_template_m2.firmament",
+      "source": "Model HexBoltTemplateM2 {\n    Units: mm\n\n    Concept BoltConcept {\n        NominalDiameter: Length\n        Length: Length\n        ThreadLength: Length\n        ThreadDesignation: String\n        Axis: Axis\n    }\n\n    Enum MetricBoltSize {\n        M8\n        M10\n    }\n\n    // McMaster 91180A151 is the audited M8 source. The M10 values below are\n    // existing fixture/test data, retained as a provisional authoring example.\n    Record HexBoltStandardRow {\n        Size: MetricBoltSize\n        NominalDiameter: Length\n        HeadAcrossFlats: Length\n        HeadHeight: Length\n        TopFlatDiameter: Length\n        TopChamferAngle: Angle\n        UnderHeadRadius: Length\n        TipChamferLength: Length\n        TipDiameter: Length\n    }\n\n    Record HexBoltSpec {\n        StableId: String\n        Standard: HexBoltStandardRow\n        Length: Length\n        ThreadLength: Length\n        ThreadDesignation: String\n        PropertyClass: String\n    }\n\n    Static Table McMasterThreadlessHexBoltGeometry: HexBoltStandardRow Key: Size {\n        Size: [M8, M10]\n        NominalDiameter: [8mm, 10mm]\n        HeadAcrossFlats: [13mm, 17mm]\n        HeadHeight: [5.3mm, 6.4mm]\n        TopFlatDiameter: [12.35mm, 16mm]\n        TopChamferAngle: [25deg, 25deg]\n        UnderHeadRadius: [0.2mm, 0.2mm]\n        TipChamferLength: [0.9375mm, 0.9375mm]\n        TipDiameter: [6.125mm, 8mm]\n    }\n\n    Static M8Standard = McMasterThreadlessHexBoltGeometry[M8]\n    Static M10Standard = McMasterThreadlessHexBoltGeometry[M10]\n\n    Static McMaster91180A151: HexBoltSpec = HexBoltSpec {\n        StableId: \"McMaster91180A151\"\n        Standard: M8Standard\n        Length: 35mm\n        ThreadLength: 22mm\n        ThreadDesignation: \"M8 x 1.25\"\n        PropertyClass: \"8.8\"\n    }\n\n    Static M10x50 = McMaster91180A151 with {\n        StableId: \"M10x50\"\n        Standard: M10Standard\n        Length: 50mm\n        ThreadLength: 26mm\n        ThreadDesignation: \"M10 x 1.5\"\n    }\n\n    Static NonstandardGeometry: HexBoltStandardRow = HexBoltStandardRow {\n        Size: M8\n        NominalDiameter: 8.25mm\n        HeadAcrossFlats: 13.4mm\n        HeadHeight: 5.5mm\n        TopFlatDiameter: 12.7mm\n        TopChamferAngle: 25deg\n        UnderHeadRadius: 0.22mm\n        TipChamferLength: 1mm\n        TipDiameter: 6.3mm\n    }\n\n    Static Nonstandard825x375: HexBoltSpec = HexBoltSpec {\n        StableId: \"Nonstandard825x375\"\n        Standard: NonstandardGeometry\n        Length: 37.5mm\n        ThreadLength: 23mm\n        ThreadDesignation: \"M8.25 experimental\"\n        PropertyClass: \"8.8\"\n    }\n\n    Template < Spec: HexBoltSpec >\n    Struct HexBolt: BoltConcept {\n        Require PositiveNominal => Spec.Standard.NominalDiameter > 0mm\n        Require HeadWiderThanShank => Spec.Standard.HeadAcrossFlats > Spec.Standard.NominalDiameter\n        Require TopFlatInsideHex => Spec.Standard.TopFlatDiameter < Spec.Standard.HeadAcrossFlats\n        Require PositiveHead => Spec.Standard.HeadHeight > 0mm\n        Require ConeAngleValid => Spec.Standard.TopChamferAngle > 0deg && Spec.Standard.TopChamferAngle < 90deg\n        Require BlendNonnegative => Spec.Standard.UnderHeadRadius >= 0mm\n        Require TipReducesDiameter => Spec.Standard.TipDiameter < Spec.Standard.NominalDiameter\n        Require TipFitsLength => Spec.Standard.TipChamferLength > 0mm && Spec.Standard.TipChamferLength < Spec.Length\n        Require ThreadFits => Spec.ThreadLength >= 0mm && Spec.ThreadLength <= Spec.Length\n\n        ExactCoaxialPart Body {\n            Axis: +X\n            RegularPolygonPrism Head {\n                Sides: 6\n                AcrossFlats: Spec.Standard.HeadAcrossFlats\n                AxialHeight: Spec.Standard.HeadHeight\n            }\n            CoaxialConeTrim TopTreatment {\n                FlatDiameter: Spec.Standard.TopFlatDiameter\n                ConeAngle: Spec.Standard.TopChamferAngle\n                IntersectionCurve: ExactConic\n            }\n            BoundedTorusBlend HeadToShaft {\n                BlendRadius: Spec.Standard.UnderHeadRadius\n                SplitPolicy: PeriodicHalfSupports\n            }\n            Cylinder Shaft {\n                ShaftDiameter: Spec.Standard.NominalDiameter\n                AxialLength: Spec.Length\n            }\n            CoaxialConeFrustum EndTreatment {\n                EndChamferLength: Spec.Standard.TipChamferLength\n                EndDiameter: Spec.Standard.TipDiameter\n            }\n            SemanticAxialRegion ThreadRegion {\n                SemanticAxialRegionLength: Spec.ThreadLength\n                Designation: Spec.ThreadDesignation\n                MaterialGeometry: Cylinder\n            }\n            Metadata {\n                StableId: Spec.StableId\n                Grade: Spec.PropertyClass\n            }\n        }\n\n        Expose {\n            NominalDiameter: Spec.Standard.NominalDiameter\n            Length: Spec.Length\n            ThreadLength: Spec.ThreadLength\n            ThreadDesignation: Spec.ThreadDesignation\n            Axis: Body.Axis\n        }\n    }\n\n    Struct ReferenceBolt = HexBolt <\n        Spec: McMaster91180A151\n    >\n}\n"
+    },
+    "profileBracket": {
+      "path": "fixtures/FirmamentV2/Canonical/valid/profile-compose-l-bracket-counterbore-pmi.firmament",
+      "source": "Model ProfileComposeLBracketCounterborePmi {\n    Units: mm\n\n    Record MountSpec { Center: Point2 Diameter: Length }\n    Static Mounts: MountSpec[] = [\n        MountSpec { Center: Point2(20mm, -10mm) Diameter: 6mm }\n        MountSpec { Center: Point2(-30mm, 20mm) Diameter: 6mm }\n    ]\n    Template ShaftHole(MountSpec spec) {\n        Hole<Shaft> Mount {\n            On: +Z\n            Center: spec.Center\n            Diameter: spec.Diameter\n            End: ThroughAll\n        }\n    }\n\n    Concept Struct Layout On XY {\n        Rect2 Horizontal { Center: [0mm, -10mm]; Size: [80mm, 20mm] }\n        Rect2 Vertical { Center: [-30mm, 10mm]; Size: [20mm, 60mm] }\n        Point2 Notch { Position: [-20mm, 0mm] }\n    }\n\n    Profile Bracket Using Layout { Loop Outer {\n        Segment South { Trace: Horizontal.Bottom; From: Horizontal.BottomLeft; To: Horizontal.BottomRight }\n        Segment East { Trace: Horizontal.Right; From: Horizontal.BottomRight; To: Horizontal.TopRight }\n        Segment Inner { Trace: Horizontal.Top; From: Horizontal.TopRight; To: Notch }\n        Segment Upright { Trace: Vertical.Right; From: Notch; To: Vertical.TopRight }\n        Segment North { Trace: Vertical.Top; From: Vertical.TopRight; To: Vertical.TopLeft }\n        Segment West { Trace: Vertical.Left; From: Vertical.TopLeft; To: Horizontal.BottomLeft }\n    } }\n\n    Struct BracketBody {\n        Compose BracketBody {\n            Base Stock { Profile: Bracket; From: 0mm; To: 12mm; Role: Stock }\n            Pattern MountPattern Over Mounts { ShaftHole(Current) }\n            Hole<Counterbore> CounterboredMount {\n                On: +Z\n                Center: Point2(-30mm, -10mm)\n                Diameter: 8mm\n                CounterboreDiameter: 14mm\n                CounterboreDepth: 4mm\n                End: ThroughAll\n            }\n        }\n    }\n\n    Modify BracketBody {\n        EdgeFinish TopPerimeter {\n            Target: Bracket.Outer\n            On: Top\n            Kind: Chamfer\n            Distance: 1mm\n        }\n    }\n\n    Pmi {\n        Datum A { Target: face(+Z) }\n        HoleDiameter CounterboredMountDiameter {\n            Target: CounterboredMount\n            Value: 8mm\n            Tolerance: PlusMinus(0.05mm, 0.02mm)\n            DatumRefs: [A]\n        }\n    }\n}\n"
+    },
+    "forgeHost": {
+      "path": "tools/Aetheris.Forge.M1Evidence/Program.cs",
+      "source": "using System.Text.Json;\nusing System.Text.Json.Serialization;\nusing Aetheris.Forge.Extensions;\nusing Aetheris.Forge.Sdk;\nusing Aetheris.Forge.Testing;\nusing MyCompany.SecretGeometry;\nusing MyCompany.SecretGeometry.Generated;\n\nvar root = FindRepositoryRoot();\nvar output = Path.Combine(root, \"docs\", \"forge\", \"artifacts\", \"m1\");\nDirectory.CreateDirectory(output);\nvar modulePath = Path.Combine(root, \"Aetheris.Forge.SampleExtension\", \"Templates\", \"SecretGeometry.firmament\");\nvar manifest = new ForgeExtensionManifest([new(SecretGeometryExtension.ExtensionId, SecretGeometryExtension.ExtensionVersion)]);\nvar host = new ForgeHost([new SecretGeometryExtension()], manifest);\nvar module = host.LoadModule(modulePath);\nvar first = ForgeTemplates.SecretCoupon(module, new SecretCouponSpec(24d, 16d, 6d), \"PrivateCoupon\")\n    .WithTargets(ForgeLoweringTarget.Brep, ForgeLoweringTarget.Cir)\n    .Compile();\nvar second = ForgeTemplates.SecretCoupon(module, new SecretCouponSpec(24d, 16d, 6d), \"PrivateCoupon\")\n    .WithTargets(ForgeLoweringTarget.Brep, ForgeLoweringTarget.Cir)\n    .Compile();\nForgeExtensionAssertions.RequireDeterministic(first, second);\nForgeExtensionAssertions.RequireCompleteProvenance(first.Artifact!);\nForgeExtensionAssertions.RequireValidBrep(first.Artifact!.Body!);\nForgeExtensionAssertions.RequireCirAssociation(first.Artifact);\nForgeExtensionAssertions.RequireStepRoundTrip(first.Artifact.StepText);\n\nvar json = new JsonSerializerOptions\n{\n    WriteIndented = true,\n    Converters = { new JsonStringEnumConverter() },\n};\nWrite(\"capabilities.json\", host.Capabilities);\nWrite(\"template-metadata.json\", module.Templates);\nWrite(\"invocation.json\", new\n{\n    module = module.Name,\n    template = \"SecretCoupon\",\n    instance = \"PrivateCoupon\",\n    generatedBinding = \"ForgeTemplates.SecretCoupon(module, new SecretCouponSpec(24, 16, 6))\",\n    parameters = new { Spec = new { type = \"SecretCouponSpec\", Width = \"24mm\", Depth = \"16mm\", Height = \"6mm\" } },\n    targets = new[] { \"Brep\", \"Cir\" },\n    success = first.IsSuccess,\n    diagnostics = first.Diagnostics,\n});\nWrite(\"provenance.json\", first.Artifact.Provenance);\nWrite(\"brep-validation.json\", new\n{\n    bindingValidation = \"passed\",\n    stepExport = \"passed\",\n    stepReimport = \"passed\",\n    vertices = first.Artifact.Body!.Topology.Vertices.Count(),\n    edges = first.Artifact.Body.Topology.Edges.Count(),\n    faces = first.Artifact.Body.Topology.Faces.Count(),\n    shells = first.Artifact.Body.Topology.Shells.Count(),\n});\nWrite(\"cir-association.json\", first.Artifact.Cir!);\nWrite(\"determinism.json\", new\n{\n    repeatedRuns = 2,\n    sameArtifactHash = first.Artifact.ArtifactHash == second.Artifact!.ArtifactHash,\n    sameStepText = first.Artifact.StepText == second.Artifact.StepText,\n    artifactHash = first.Artifact.ArtifactHash,\n    capability = first.Artifact.Capabilities.Single(),\n});\nWrite(\"performance.json\", new\n{\n    units = \"milliseconds\",\n    first = Timing(first),\n    warm = Timing(second),\n    note = \"Developer-machine wall-clock evidence; not a benchmark or release gate.\",\n});\nFile.WriteAllText(Path.Combine(output, \"sample-secret-coupon.step\"), first.Artifact.StepText, new System.Text.UTF8Encoding(false));\nConsole.WriteLine(JsonSerializer.Serialize(new { output, first.Artifact.ArtifactHash, first.IsSuccess }, json));\n\nobject Timing(ForgeCompilationResult result) => new\n{\n    registration = result.RegistrationTime.TotalMilliseconds,\n    capabilityResolution = result.ResolutionTime.TotalMilliseconds,\n    templateInvocation = result.TemplateInvocationTime.TotalMilliseconds,\n    extensionLowering = result.ExtensionLoweringTime.TotalMilliseconds,\n    compilerAndValidation = result.CompilerLoweringTime.TotalMilliseconds,\n};\n\nvoid Write(string name, object value) => File.WriteAllText(Path.Combine(output, name), JsonSerializer.Serialize(value, json) + Environment.NewLine, new System.Text.UTF8Encoding(false));\n\nstatic string FindRepositoryRoot()\n{\n    var directory = new DirectoryInfo(AppContext.BaseDirectory);\n    while (directory is not null && !File.Exists(Path.Combine(directory.FullName, \"Aetheris.slnx\"))) directory = directory.Parent;\n    return directory?.FullName ?? throw new DirectoryNotFoundException(\"Aetheris repository root not found.\");\n}\n"
+    },
+    "forgeExtension": {
+      "path": "Aetheris.Forge.SampleExtension/SecretGeometryExtension.cs",
+      "source": "using System.Globalization;\nusing Aetheris.Forge.Extensions;\nusing Aetheris.Kernel.Core.Construction;\nusing Aetheris.Kernel.Core.Math;\nusing Aetheris.Kernel.Core.Geometry;\nusing Aetheris.Semantics;\n\nnamespace MyCompany.SecretGeometry;\n\npublic sealed class SecretGeometryExtension : IForgeExtension\n{\n    public const string ExtensionId = \"MyCompany.SecretGeometry\";\n    public static readonly Version ExtensionVersion = new(1, 0, 0);\n    public string Id => ExtensionId;\n    public Version Version => ExtensionVersion;\n    public void Register(ForgeExtensionRegistry registry) => registry.RegisterCapability(new SecretCouponCapability());\n}\n\npublic sealed class SecretCouponCapability : IForgeCapability\n{\n    public static readonly ForgeCapabilityId CapabilityId = new(\"MyCompany.SecretGeometry.SecretCoupon\");\n\n    public ForgeCapabilityDescriptorV1 Descriptor { get; } = new(\n        CapabilityId,\n        new Version(1, 0, 0),\n        SecretGeometryExtension.ExtensionId,\n        SecretGeometryExtension.ExtensionVersion,\n        \"Private coupon sizing policy lowered to Aetheris standard prismatic ConstructionIR.\",\n        [\n            new(\"Width\", ForgeCapabilityParameterType.Length, Description: \"Finished coupon width.\"),\n            new(\"Depth\", ForgeCapabilityParameterType.Length, Description: \"Finished coupon depth.\"),\n            new(\"Height\", ForgeCapabilityParameterType.Length, Description: \"Finished coupon height.\"),\n        ],\n        ForgeOutputClassification.ConstructionIr,\n        new HashSet<ForgeLoweringTarget> { ForgeLoweringTarget.ConstructionIr, ForgeLoweringTarget.Brep, ForgeLoweringTarget.Cir },\n        ForgeCapabilityDeterminism.Deterministic,\n        \"Exact planar, linear, closed manifold prism; no mesh-derived geometry.\",\n        \"Width, Depth, and Height must be finite positive millimetre values.\",\n        \"MyCompany.SecretGeometry/SecretCoupon/v1\");\n\n    public ForgeCapabilityExecutionResult Execute(ForgeCapabilityInvocationContext context, ForgeCapabilityArguments arguments)\n    {\n        var width = Positive(arguments.RequiredNumber(\"Width\", ForgeCapabilityParameterType.Length), \"Width\");\n        var depth = Positive(arguments.RequiredNumber(\"Depth\", ForgeCapabilityParameterType.Length), \"Depth\");\n        var height = Positive(arguments.RequiredNumber(\"Height\", ForgeCapabilityParameterType.Length), \"Height\");\n        var profile = new[]\n        {\n            new Point3D(-width / 2d, -depth / 2d, 0d),\n            new Point3D(width / 2d, -depth / 2d, 0d),\n            new Point3D(width / 2d, depth / 2d, 0d),\n            new Point3D(-width / 2d, depth / 2d, 0d),\n        };\n        var signature = string.Join(\"x\", new[] { width, depth, height }.Select(value => value.ToString(\"R\", CultureInfo.InvariantCulture)));\n        var sourceIdentity = $\"{CapabilityId.Value}@1.0.0:{signature}\";\n        var descriptor = new ContinuumConstructionDescriptor(\n            sourceIdentity,\n            context.InvocationIdentity,\n            [new(-height / 2d, profile), new(height / 2d, profile)],\n            [0, 1, 2, 3],\n            [\"PrismaticExtrude\"],\n            [context.SourceIdentity, context.TemplateIdentity, CapabilityId.Value, SecretGeometryExtension.ExtensionId + \"@1.0.0\"]);\n        var body = ForgeCapabilityExecutor.MaterializeConstruction(descriptor);\n        var planarFaces = body.Bindings.FaceBindings.Select(binding =>\n            (binding.FaceId, Plane: body.Geometry.GetSurface(binding.SurfaceGeometryId).Plane)).Where(item => item.Plane is not null).ToArray();\n        var topFace = planarFaces.Single(item => item.Plane!.Value.Normal.ToVector().Z > 0.9d).FaceId;\n        var loadFace = planarFaces.Single(item => item.Plane!.Value.Normal.ToVector().X > 0.9d).FaceId;\n        var semanticSpan = SemanticSourceSpan.Generated(context.SourceIdentity);\n        var semanticProvenance = new[]\n        {\n            new SemanticProvenance(\"template-specialization\", context.TemplateIdentity, context.InvocationIdentity, semanticSpan),\n            new SemanticProvenance(\"forge-capability\", CapabilityId.Value + \"@1.0.0\", SecretGeometryExtension.ExtensionId + \"@1.0.0\", semanticSpan),\n        };\n        SemanticValue Face(string name, Aetheris.Kernel.Core.Topology.FaceId face) => new(\n            $\"forge:{sourceIdentity}.{name}\", new(\"BoundaryRegion\"),\n            [new BoundaryRegionCapability(), new SelectableCapability(), new ExactGeometryCapability(), new AnalysisRegionCapability(), new ModifyTargetCapability()],\n            [new ExactBrepFaceBinding(body, face, $\"forge:{sourceIdentity}.{name}\"), new ConstructionIdentityBinding(sourceIdentity)],\n            provenance: semanticProvenance, generatedSourceSpan: semanticSpan, exposedName: name);\n        var semanticRoot = new SemanticValue($\"forge:{sourceIdentity}\", new(\"Body\"),\n            [new BodyCapability(), new SelectableCapability(), new ExactGeometryCapability(), new ModifyTargetCapability()],\n            [new ExactBrepBodyBinding(body, $\"forge:{sourceIdentity}\"), new ConstructionIdentityBinding(sourceIdentity)],\n            [Face(\"TopFace\", topFace), Face(\"LoadRegion\", loadFace)], semanticProvenance, generatedSourceSpan: semanticSpan);\n        return ForgeCapabilityExecutionResult.Success(new ForgeCapabilityOutput(\n            descriptor,\n            ExactBrep: body,\n            ContinuumConstruction: descriptor,\n            Provenance: new Dictionary<string, string>(StringComparer.Ordinal)\n            {\n                [\"capability\"] = CapabilityId.Value + \"@1.0.0\",\n                [\"extension\"] = SecretGeometryExtension.ExtensionId + \"@1.0.0\",\n                [\"source\"] = context.SourceIdentity,\n                [\"template\"] = context.TemplateIdentity,\n                [\"construction\"] = sourceIdentity,\n            },\n            SemanticRoot: semanticRoot));\n    }\n\n    private static double Positive(double value, string name)\n    {\n        if (!double.IsFinite(value) || value <= 0d) throw new ForgeCapabilityAdmissionException($\"{name} must be finite and greater than zero.\");\n        return value;\n    }\n}\n"
+    }
+  },
+  "measurements": {
+    "generatedAt": "2026-08-09",
+    "commands": {
+      "fea": "aetheris fea docs/fea/artifacts/m5/plate-with-hole.firmament --out-dir <temp> --json",
+      "mesh": "aetheris mesh testdata/firmament/examples/hexbolt_template_m2.firmament --format obj --output <temp>/hexbolt.obj --debug-ir <temp>/hexbolt.mesh.json --json",
+      "assembly": "aetheris asm inspect fixtures/AssemblyM0/bearing-module.firmament --json"
+    },
+    "fea": {
+      "maximumDisplacementMeters": 0.000010187318949461127,
+      "maximumVonMisesPascal": 16168210.826548755,
+      "appliedForceNewton": 10000.000000000002,
+      "reactionForceNewton": 10000.000000356738,
+      "residualNewton": 3.5673916145632945e-7,
+      "abaqusDeckGenerated": true,
+      "commercialAbaqusExecuted": false
+    },
+    "mesh": {
+      "pipeline": "SurfaceMeshIR",
+      "patchCount": 21,
+      "cellCount": 953,
+      "polygonCount": 953,
+      "quadCount": 905,
+      "triangleCount": 7,
+      "boundaryPolygonCount": 41,
+      "quadPercentage": 94.9632738719832,
+      "finalTriangleCount": 2164,
+      "watertight": true,
+      "connected": true,
+      "outwardOriented": true,
+      "maxChordalDeviation": 0.035931582229996394,
+      "deterministicHash": "e89e9021f100587d6fdf52952fd1d5571c2fa1a4d407440405df327a02ef280d"
+    },
+    "bearingStackup": {
+      "name": "AxialReach",
+      "nominalMillimeters": 45,
+      "worstCaseMinimumMillimeters": 44.92,
+      "worstCaseMaximumMillimeters": 45.1,
+      "requiredMinimumMillimeters": 44.9,
+      "contributionCount": 6,
+      "passed": true
+    },
+    "failingStackup": {
+      "name": "ImpossibleClearance",
+      "worstCaseMinimumMillimeters": 44.92,
+      "requiredMinimumMillimeters": 44.95,
+      "exitCode": 1,
+      "diagnostic": "assembly-tolerance-assertion-failure"
+    }
+  }
+}

@@ -1272,30 +1272,30 @@ script = 'prepublishOnly'
 command = 'npm run build'
 
 [[package]]
-ID = 'npm:baseline-browser-mapping@2.11.12'
+ID = 'npm:baseline-browser-mapping@2.11.13'
 Name = 'baseline-browser-mapping'
-Version = '2.11.12'
+Version = '2.11.13'
 Source = 'npm'
-Integrity = 'sha512-r7WnVImvVCeFpf2DOXfy41aPWzeNg3H/A2X4dKmy1QL0MSyyk/e7z8ihJ3N6Nn2PsdhkVlqnEfnUE4a05P2aTA=='
+Integrity = 'sha512-k9HNuUVMlqVjQ9UHzfPjIqiDbWw7WqT1AoT7GL8VwvF3r0ZfArtgiSPAlmupyNquNgOJHTuH4CKYf8ttMTWBTQ=='
 Repo = ''
 Rev = ''
 TreeHash = ''
 Path = ''
 Workspace = ''
-Hash = 'sha256:098485f264aed6c9fe41fb004436d5c55c9e12450ada929837740614587ddfb2'
+Hash = 'sha256:4ef450724c8303d22b9b133566e5d3288c5cf39e8d03c3930a77e773e09d9431'
 
 [[package]]
-ID = 'npm:browserslist@4.28.7'
+ID = 'npm:browserslist@4.28.8'
 Name = 'browserslist'
-Version = '4.28.7'
+Version = '4.28.8'
 Source = 'npm'
-Integrity = 'sha512-JxV13hNrFxqjOc8alRbq9dK1MM79NEXYpma2B2J4wAtpWS5zIEIKqWPGCl7N4o7Uc7B7itylh7SuDujATRyyTw=='
+Integrity = 'sha512-V2NpofLblG64mfOtSgDhOJESZEGogzDMBv/q+W6oc4LXWP/q75eOXoOaaOu1EOadB9U4Bwx/e0yzbvwKH8zalA=='
 Repo = ''
 Rev = ''
 TreeHash = ''
 Path = ''
 Workspace = ''
-Hash = 'sha256:66daf576e768fd818214b29a82eb6f8f81e2737c612c320e9afa328871ab0997'
+Hash = 'sha256:6cbf6cf3bcb0f8d436b0f8347a2b6c606e765f7705f859aa39d1e444300f884f'
 
 [[package]]
 ID = 'npm:caniuse-lite@1.0.30001809'
@@ -1355,17 +1355,17 @@ Workspace = ''
 Hash = 'sha256:89c1ac9c946ee8905a875837114528e97eeae35e03be3190584b2216af43e4a7'
 
 [[package]]
-ID = 'npm:electron-to-chromium@1.5.402'
+ID = 'npm:electron-to-chromium@1.5.403'
 Name = 'electron-to-chromium'
-Version = '1.5.402'
+Version = '1.5.403'
 Source = 'npm'
-Integrity = 'sha512-/oOpMaPT6Yg+6/1XQhyIPlzgj7Ye9zf+nNM2Uh6OcE2G2oNptWazFa+qB2Pdqqbsc9KnIDzgAntoYN0dbwOXwA=='
+Integrity = 'sha512-MQsYmdaLzvaCX5j+ZZBr5Fm6uCCnPQcRtlvmvRlWqrXy+BH2O4ffXIAScF+JQznQWB9brWp4lSD9Z4yNmaf2BA=='
 Repo = ''
 Rev = ''
 TreeHash = ''
 Path = ''
 Workspace = ''
-Hash = 'sha256:49b6b90c18d39090cc70364daec1b1992b2a249a22b4a7d569317c71ba742f75'
+Hash = 'sha256:f30a44796d6fd8bb31258488d66cdb8512121847e0bb8305c068d56cecdc5cd8'
 
 [[package]]
 ID = 'npm:esbuild@0.25.12'
@@ -1508,6 +1508,19 @@ Hash = 'sha256:b11e78819544a6606e3317647a5593c102ea38d3c5afae62cd63f9c2c369485a'
 kind = 'lifecycleScript'
 script = 'postpublish'
 command = 'git push origin --all; git push origin --tags'
+
+[[package]]
+ID = 'npm:machinalayout@0.7.0'
+Name = 'machinalayout'
+Version = '0.7.0'
+Source = 'npm'
+Integrity = 'sha512-1VhKMwdO4LR+jTe+oaS0trvOTTUlFCbqycOLcTkNphx1LwBWDCrwZmj4sstrldTpJpgQLDOqbqjbeaAxqgR2Hw=='
+Repo = ''
+Rev = ''
+TreeHash = ''
+Path = ''
+Workspace = ''
+Hash = 'sha256:9c516848d1b3e597fce1b6e7e68ddba8975334756a9da7fdfbee01f0ddc78773'
 
 [[package]]
 ID = 'npm:ms@2.1.3'
@@ -1928,7 +1941,7 @@ Optional = false
 
 [[edge]]
 From = 'npm:@babel/helper-compilation-targets@7.29.7'
-To = 'npm:browserslist@4.28.7'
+To = 'npm:browserslist@4.28.8'
 Kind = 'runtime'
 Optional = false
 
@@ -2263,31 +2276,31 @@ Kind = 'runtime'
 Optional = false
 
 [[edge]]
-From = 'npm:browserslist@4.28.7'
-To = 'npm:baseline-browser-mapping@2.11.12'
+From = 'npm:browserslist@4.28.8'
+To = 'npm:baseline-browser-mapping@2.11.13'
 Kind = 'runtime'
 Optional = false
 
 [[edge]]
-From = 'npm:browserslist@4.28.7'
+From = 'npm:browserslist@4.28.8'
 To = 'npm:caniuse-lite@1.0.30001809'
 Kind = 'runtime'
 Optional = false
 
 [[edge]]
-From = 'npm:browserslist@4.28.7'
-To = 'npm:electron-to-chromium@1.5.402'
+From = 'npm:browserslist@4.28.8'
+To = 'npm:electron-to-chromium@1.5.403'
 Kind = 'runtime'
 Optional = false
 
 [[edge]]
-From = 'npm:browserslist@4.28.7'
+From = 'npm:browserslist@4.28.8'
 To = 'npm:node-releases@2.0.53'
 Kind = 'runtime'
 Optional = false
 
 [[edge]]
-From = 'npm:browserslist@4.28.7'
+From = 'npm:browserslist@4.28.8'
 To = 'npm:update-browserslist-db@1.3.0'
 Kind = 'runtime'
 Optional = false
@@ -2715,6 +2728,12 @@ Optional = false
 [[edge]]
 From = 'npm:vite@6.4.3'
 To = 'npm:tinyglobby@0.2.17'
+Kind = 'runtime'
+Optional = false
+
+[[edge]]
+From = 'yuechen-li-dev:target:app'
+To = 'npm:machinalayout@0.7.0'
 Kind = 'runtime'
 Optional = false
 

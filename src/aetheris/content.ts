@@ -1,1087 +1,635 @@
-import type { DocPage } from "./types";
+import generated from "./generated/preview2-docs.json";
+import type { DocBlock, DocPage } from "./types";
 
-const box = `Model BareBox {
-    Units: mm
-    Box Base { Size: [80mm, 50mm, 25mm] }
-    Assert Volume Base {
-        Expected: 100000mm^3
-        Tolerance: 0mm^3
-        Note: "Rectangular stock"
-    }
-}`;
-
-const rectanglePath = `Model ConceptPathRectangle {
-    Units: mm
-    Concept Path Outline {
-        Start: Point2(-10mm, -5mm)
-        Heading: 0deg
-        Line South { Length: 20mm }
-        Line East { Turn: 90deg; Length: 10mm }
-        Line North { Turn: 90deg; Length: 20mm }
-        Close West
-    }
-    Profile Plate From Outline
-    Struct Body { Extrude Plate { Profile: Plate; From: -2mm; To: 0mm } }
-}`;
-
-const lPath = `Concept Path Outline {
-    Start: Point2(0mm, 0mm)
-    Heading: 0deg
-    Line South { Length: 40mm }
-    Line East { Turn: 90deg; Length: 10mm }
-    Line Inner { Turn: 90deg; Length: 30mm }
-    Line Upright { Turn: -90deg; Length: 30mm }
-    Line North { Turn: 90deg; Length: 10mm }
-    Close West
-}
-Profile Bracket From Outline
-Struct Body { Extrude Bracket { Profile: Bracket; From: 0mm; To: 8mm } }`;
-
-const pattern = `Record MountSpec { Center: Point2 Diameter: Length }
-Static Mounts: MountSpec[] = [
-    MountSpec { Center: Point2(-30mm, -15mm) Diameter: 6mm }
-    MountSpec { Center: Point2(30mm, -15mm) Diameter: 6mm }
-    MountSpec { Center: Point2(30mm, 15mm) Diameter: 6mm }
-    MountSpec { Center: Point2(-30mm, 15mm) Diameter: 6mm }
-]
-Require ValidDiameter => 6mm > 0mm
-Template MountHole(MountSpec spec) {
-    Hole<Shaft> Mount {
-        On: +Z
-        Center: spec.Center
-        Diameter: spec.Diameter
-        End: ThroughAll
-    }
-}
-Box Plate { Size: [80mm, 50mm, 8mm] }
-Modify Plate { Pattern MountPattern Over Mounts { MountHole(Current) } }`;
-
-const pmi = `Box Base { Size: [80mm, 50mm, 12mm] }
-Modify Base {
-    Hole<Shaft> Mount {
-        On: +Z
-        Center: Point2(20mm, 20mm)
-        Diameter: 8mm
-        End: ThroughAll
-    }
-}
-Require MountDiameterConstraint {
-    Actual: Mount.Diameter
-    Expected: 8mm
-    Tolerance: PlusMinus(0.05mm, 0.02mm)
-}
-Pmi {
-    Datum A { Target: face(+Z) }
-    HoleDiameter MountDiameterCallout {
-        From: MountDiameterConstraint
-        As: HoleDiameter
-        DatumRefs: [A]
-    }
-}`;
-
-const code = (codeText: string, fixture: string, caption?: string) => ({
-  type: "code" as const,
-  code: codeText,
-  fixture,
+const html = (value: string): DocBlock => ({ kind: "html", html: value });
+const code = (
+  source: keyof typeof generated.fixtures,
+  caption: string,
+  demonstrates?: string,
+): DocBlock => ({
+  kind: "code",
+  source,
+  fixture: generated.fixtures[source].path,
+  filename: generated.fixtures[source].path.split("/").at(-1),
   caption,
+  demonstrates,
 });
+const literal = (
+  codeText: string,
+  filename: string,
+  caption: string,
+): DocBlock => ({ kind: "code", code: codeText, filename, caption });
 
-export const DOC_PAGES: DocPage[] = [
-  {
-    route: "/aetheris/",
-    group: "Introduction",
-    title: "Exact CAD, written down",
-    eyebrow: "Aetheris · Preview 1",
-    description:
-      "A public manual for Firmament V2: exact, semantic, code-first CAD that compiles to deterministic STEP AP242.",
-    keywords: ["Aetheris", "Firmament", "exact CAD", "STEP AP242", "Preview 1"],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">Aetheris turns Firmament source into exact boundary representation and canonical STEP AP242. It is not a macro recorder for a CAD GUI, and it will never ask which toolbar icon resembles a depressed bagel.</p><div class="callout"><strong>Preview 1, honestly.</strong> Exact primitives, bounded profiles and mechanical features, semantic requirements, PMI, verification, and a bounded existing-STEP workflow are here. Mesh fallback, arbitrary Boolean improvisation, automatic decompilation, and a general scripting language are not.</div><h2>What happens to the source?</h2><div class="pipeline"><span>Firmament source</span><b>→</b><span>semantic intent</span><b>→</b><span>normalized representation</span><b>→</b><span>exact B-rep</span><b>→</b><span>STEP AP242</span></div><p>A profile edge remains the edge declared by <code>Outline.South</code>; it is not replaced in the authoring model by whichever anonymous kernel edge received ID 436 on a damp Tuesday. Unsupported exact routes diagnose instead of quietly degrading to a mesh or generic NURBS patch.</p>`,
-      },
-      code(
-        box,
-        "fixtures/FirmamentV2/Canonical/valid/bare-box.firmament",
-        "A complete exact solid, plus a source-level volume assertion.",
-      ),
-      {
-        type: "figure",
-        src: "/aetheris/assets/first-part.svg",
-        alt: "Isometric technical illustration of an 80 by 50 by 25 millimetre box",
-        caption:
-          "The first part. Diagrammatic view; the fixture builds the authoritative STEP artifact.",
-      },
-      {
-        type: "html",
-        html: `<h2>Five useful minutes</h2><div class="cards"><a href="/aetheris/getting-started"><strong>Build your first part</strong><span>Use the real source workflow, then validate, build, view, and inspect.</span></a><a href="/aetheris/firmament/language-tour"><strong>Learn the mental model</strong><span>Units, declarations, source identity, and exactness.</span></a><a href="/aetheris/reference/support"><strong>Check the boundary</strong><span>The matrix comes from the frozen release manifest.</span></a><a href="/aetheris/for-llms"><strong>Give this to a model</strong><span>A compact canonical context without parser archaeology.</span></a></div>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/getting-started",
-    group: "Introduction",
-    title: "Getting started",
-    description:
-      "Install Preview 1 from the Windows bundle or NuGet and produce your first STEP file.",
-    keywords: [
-      "install",
-      "source",
-      "dotnet",
-      "validate",
-      "build",
-      "inspect",
-      "STEP",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">Preview 1 is available now. Choose the Windows bundle for the complete command-line and Cadmata viewer experience, or install the CLI as a .NET global tool.</p><h2>Download the complete Windows bundle</h2><p>Download <a href="https://github.com/yuechen-li-dev/Aetheris/releases/tag/v2.0.0-preview.1">Aetheris 2.0.0-preview.1</a>, extract <code>Aetheris-2.0.0-preview.1-win-x64.zip</code>, and run <code>aetheris.exe</code> from the extracted <code>Aetheris-win-x64</code> directory. It includes Cadmata and production frontend assets; <code>aetheris view</code> discovers it package-relatively.</p><h2>Install the CLI from NuGet</h2><pre class="terminal"><code>dotnet tool install --global Aetheris.CLI --prerelease
-aetheris --help</code></pre><p>The NuGet tool requires the .NET 10 runtime and supports validate, build, inspect, analyze, and verify. It does not bundle Cadmata; use the Windows bundle when you need <code>aetheris view</code>.</p><h2>Write one small thing</h2><p>Save this as <code>FirstPart.firmament</code>. It introduces exactly three facts: a model has millimetre units, a box has a size, and spelling matters.</p>`,
-      },
-      code(
-        `Model FirstPart {
-    Units: mm
-    Box Body { Size: [80mm, 50mm, 10mm] }
-}`,
-        "fixtures/FirmamentV2/Canonical/valid/bare-box.firmament",
-      ),
-      {
-        type: "html",
-        html: `<h2>Five-minute loop</h2><pre class="terminal"><code>aetheris validate FirstPart.firmament
-aetheris build FirstPart.firmament
-aetheris view FirstPart.firmament
-aetheris inspect FirstPart.firmament
-aetheris verify FirstPart.firmament
-aetheris analyze FirstPart.step --json</code></pre><p><code>validate</code> checks language and semantic intent without materializing geometry. <code>build</code> writes <code>FirstPart.step</code> beside the source; <code>view</code> builds Firmament if needed and opens the STEP in Cadmata; <code>inspect</code> reports source semantics; <code>analyze</code> reports STEP topology; and <code>verify</code> builds/reimports source for authoritative evidence.</p><p><code>view</code> is available from the Windows bundle. If the NuGet tool is not on PATH, invoke it from the chosen tool-install location or use the Windows bundle executable. No Vite development server or second terminal is required.</p>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/vscode",
-    group: "Introduction",
-    title: "VS Code",
-    description:
-      "Edit Firmament as a first-class language with canonical highlighting and CLI-backed Problems.",
-    keywords: [
-      "VS Code",
-      "VSIX",
-      "extension",
-      "Problems",
-      "snippets",
-      "validate on save",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">Aetheris Firmament is the lightweight Preview 1 extension for <code>.firmament</code> files. It provides language recognition, canonical TextMate highlighting, comments and brackets, focused snippets, and commands backed by the real Aetheris CLI. It is not an LSP and does not duplicate the compiler.</p><h2>Install the VSIX</h2><ol><li>Download <a href="https://github.com/yuechen-li-dev/Aetheris/releases/tag/v2.0.0-preview.1"><code>aetheris-firmament-0.1.0-preview.1.vsix</code></a> from the Preview 1 GitHub Release.</li><li>In VS Code run <strong>Extensions: Install from VSIX...</strong>.</li><li>Ensure <code>aetheris</code> is on PATH, or set <code>aetheris.executablePath</code> to the CLI executable.</li></ol><p>The extension has not been published to Marketplace.</p><h2>Editing and snippets</h2><p>Opening a <code>.firmament</code> file selects the Firmament language automatically. Snippets cover models, primitives, Concept Path/Profile, holes, slots, edge finishes, Require/PMI projection, volume assertions, and InlineStep. Highlighting improves readability; it does not prove that a geometry regime is supported.</p><h2>Commands and Problems</h2><dl><dt>Aetheris: Validate Firmament</dt><dd>Checks syntax and semantic intent without materializing geometry.</dd><dt>Aetheris: Build STEP</dt><dd>Runs the build stage, reports the adjacent STEP artifact, and can surface materialization-policy diagnostics.</dd><dt>Aetheris: View in Cadmata</dt><dd>Delegates build, Cadmata discovery, and launch to <code>aetheris view</code>.</dd><dt>Aetheris: Verify Model</dt><dd>Runs authoritative build/reimport verification.</dd></dl><p>Structured codes, severity, messages, and available source spans appear in VS Code Problems. Current Preview 1 CLI diagnostics do not all include source spans; those entries receive a minimal range rather than a guessed semantic location.</p><h2>Settings and trust</h2><dl><dt>aetheris.executablePath</dt><dd>Explicit CLI executable path. Empty means resolve <code>aetheris</code> from PATH.</dd><dt>aetheris.validateOnSave</dt><dd>Defaults on and validates only a saved Firmament file. No daemon starts on activation.</dd></dl><p>CLI commands and validate-on-save are disabled in untrusted workspaces because they execute a local compiler on workspace files.</p><h2>Current limits</h2><p>No completion, hover, semantic tokens, navigation, rename, formatting, embedded CAD view, project model, or background language service is included. Validate and build remain deliberately distinct; consult the frozen support matrix when build rejects unsupported geometry.</p>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/why-aetheris",
-    group: "Introduction",
-    title: "Why Aetheris?",
-    description:
-      "The technical case for exact code-first CAD, semantic selection, and a bounded output contract.",
-    keywords: ["design", "semantics", "source-bound", "exact geometry", "LLM"],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">A code-first CAD system is useful only if the code names engineering intent, not the incidental topology of one kernel run.</p><h2>Text is the editable artifact</h2><p>Firmament source diffs, reviews, templates, and validates like code. Humans and language models use the same declarations; there is no secret GUI transcript beneath them. Dimensions remain dimensions, holes remain holes, and a requirement can reach PMI without copying its number into a third ceremonial location.</p><h2>Source-bound selection</h2><p>Final B-rep edges are products of construction. Aetheris selects declared sources—profile segments, loops, holes, and slots—and carries provenance into exact construction. Some plausible operations are therefore unsupported; supported operations are explainable and deterministic.</p><h2>Bounded exactness</h2><p>Aetheris prefers admitted analytic families over automatic generic fallback. Planes, cylinders, cones, spheres, tori, and exact line/circle/arc curves survive into STEP. A self-intersecting blend diagnoses instead of applying a smoothing function and hoping manufacturing appreciates impressionism.</p><h2>Why AP242?</h2><p>STEP AP242 lets exact geometry and product semantics leave the compiler for downstream engineering systems. Preview 1 promises a deterministic bounded subset rather than universal interchange.</p>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/firmament/language-tour",
-    group: "Firmament V2",
-    title: "Language tour",
-    description:
-      "The canonical model: units, values, declarations, intent, and source-grounded selection.",
-    keywords: [
-      "Model",
-      "Units",
-      "Point2",
-      "Vector2",
-      "Concept",
-      "Struct",
-      "Selection",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">Firmament is a declarative language for constructive and semantic intent. It is not general control flow and not a command stream sent to a hidden GUI.</p><h2>Model and units</h2><p>Every canonical document begins with <code>Model Name { Units: mm }</code>. Millimetres are the only canonical length unit. Lengths carry <code>mm</code>, angles <code>deg</code>, volumes <code>mm^3</code>. Typed points use <code>Point2</code>/<code>Point3</code>; direction vectors use <code>Vector2</code>/<code>Vector3</code>. Primitive <code>Size</code> is the context-directed array exception.</p><h2>Material, scaffolding, semantics</h2><dl><dt>Material</dt><dd>Exact primitives and admitted Profile/Compose bodies become solids.</dd><dt>Scaffolding</dt><dd>Concepts, construction planes, paths, records, statics, and templates construct bounded intent.</dd><dt>Semantics</dt><dd>Selection, Require, Pmi, and Assert Volume bind expectations to results.</dd></dl><h2>Selections name causes</h2><p><code>ProfileSegments</code>, <code>ProfileLoop</code>, <code>Hole</code>, and <code>Slot</code> sources remain meaningful after topology changes. Never infer a B-rep edge number.</p>`,
-      },
-      {
-        type: "matrix",
-        headers: ["Value", "Canonical spelling", "Example"],
-        rows: [
-          ["Length", "number + mm", "8mm"],
-          ["Angle", "number + deg", "90deg"],
-          ["Volume", "number + mm^3", "100000mm^3"],
-          ["2D point", "Point2(length, length)", "Point2(20mm, 10mm)"],
-          ["Direction", "Vector2/Vector3(unitless…)", "Vector2(1, 0)"],
-        ],
-      },
-      {
-        type: "html",
-        html: `<p>When no admitted exact route exists, compilation rejects the model. “Unsupported in Preview 1” is a result, not an invitation to invent a lowercase keyword and see whether the parser is feeling nostalgic.</p>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/firmament/concept-path",
-    group: "Firmament V2",
-    title: "Concept Path: draw by describing motion",
-    description:
-      "Author connected line and tangent-arc profiles with local heading, turns, closure, and named identities.",
-    keywords: [
-      "Concept Path",
-      "Start",
-      "Heading",
-      "Line",
-      "Turn",
-      "Arc",
-      "Close",
-      "End",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">Concept Path lets an outline read like the path itself: begin here, face this way, travel, turn, and close. Manually tracking seven coordinate pairs is the sort of task computers were allegedly invented to prevent.</p><h2>Rectangle</h2><p><code>Start</code> is typed. Path <code>Heading</code> establishes local direction. A line continues it, uses relative <code>Turn</code>, or sets an absolute <code>Heading</code>. <code>Close West</code> emits the final named step.</p>`,
-      },
-      code(
-        rectanglePath,
-        "fixtures/FirmamentV2/Canonical/valid/concept-path-rectangle.firmament",
-      ),
-      {
-        type: "figure",
-        src: "/aetheris/assets/concept-path.svg",
-        alt: "L-shaped concept path with named steps and a rounded corner",
-        caption:
-          "Path identities survive resolution: Outline.Start, Outline.South, and Outline.South.End.",
-      },
-      {
-        type: "html",
-        html: `<h2>An L-profile</h2><p>The negative turn at <code>Upright</code> creates the reflex corner. Once extruded, Top and Bottom mean local profile-frame faces, not permanent world Z.</p>`,
-      },
-      code(
-        lPath,
-        "fixtures/FirmamentV2/Canonical/valid/profile-chamfer-mixed-convex-reflex-loop-top.firmament",
-      ),
-      {
-        type: "html",
-        html: `<h2>One exact tangent arc</h2><p>An <code>Arc</code> continues tangent to its incoming step and changes heading by <code>Turn</code>. Radius and turn determine the exact circular segment. Named steps and <code>.End</code> identities remain authoring vocabulary.</p>`,
-      },
-      code(
-        `Concept Path RoundedCorner {
-    Start: Point2(0mm, 0mm)
-    Heading: 0deg
-    Line Base { Length: 40mm }
-    Line Rise { Turn: 90deg; Length: 20mm }
-    Arc OuterFillet { Radius: 10mm; Turn: 90deg }
-    Line Top { Length: 30mm }
-    Close Left
-}`,
-        "fixtures/FirmamentV2/Canonical/valid/concept-path-l-bracket-arc.firmament",
-      ),
-      {
-        type: "html",
-        html: `<h2>The low-level equivalent</h2><p><code>Profile Name From Path</code> is preferred. Explicit Segment/Trace authoring exposes segment identity for advanced loops; it is not a beginner tax.</p>`,
-      },
-      code(
-        `Profile Plate {
-    Loop Outer {
-        Segment South { Trace: Outline.South; From: Outline.Start; To: Outline.South.End }
-        Segment East { Trace: Outline.East; From: Outline.South.End; To: Outline.East.End }
-        Segment North { Trace: Outline.North; From: Outline.East.End; To: Outline.North.End }
-        Segment West { Trace: Outline.West; From: Outline.North.End; To: Outline.West.End }
-    }
-}`,
-        "fixtures/FirmamentV2/Canonical/valid/concept-path-low-level-mixed.firmament",
-      ),
-      {
-        type: "html",
-        html: `<h2>Validity</h2><ul><li>Material profiles close explicitly.</li><li>Outer and inner loops use their required winding.</li><li>Zero-radius arcs, open profiles, and wrong winding diagnose.</li><li>Paths are scaffolding; Profile plus Extrude/Compose creates material.</li></ul>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/firmament/static-authoring",
-    group: "Firmament V2",
-    title: "Static data, templates, patterns, and Match",
-    description:
-      "Repeat semantic features through bounded compile-time expansion.",
-    keywords: ["Record", "Static", "Template", "Pattern", "Match", "Require"],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">Records, static arrays, one-parameter templates, and patterns expand deterministically before material lowering. They are a bounded convenience, not C# wearing a shorter coat.</p>`,
-      },
-      code(
-        pattern,
-        "fixtures/FirmamentV2/Canonical/valid/docs-four-hole-pattern.firmament",
-        "Generated holes receive stable identities MountPattern_0, MountPattern_1, …",
-      ),
-      {
-        type: "html",
-        html: `<h2>Rules</h2><ul><li>Record declares typed fields; Static supplies compile-time values.</li><li>A template accepts one typed parameter.</li><li>Pattern invokes it with <code>Current</code> and emits bounded Hole or Slot features.</li><li>A generated Profile requires explicit identity and uses a direct indexed call such as <code>PlateProfile(Specs[0])</code>.</li><li>Duplicate names, order failures, unsupported output, and invalid comparisons diagnose.</li></ul><h2>Match is experimental</h2><p>Match supports bounded template-expansion arm selection only. It is not runtime branching.</p>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/geometry/profiles-compose",
-    group: "Geometry",
-    title: "Profiles, local frames, and Compose",
-    description:
-      "Turn source-grounded 2D boundaries into exact prismatic bodies without losing semantic identity.",
-    keywords: [
-      "Profile",
-      "Loop",
-      "Segment",
-      "Trace",
-      "Compose",
-      "Extrude",
-      "local frame",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">A Profile is an authored boundary in a local 2D frame. Extrusion follows local +Z. This is innocuous until a plane rotates and “top” becomes a question with witnesses.</p><h2>Paths and low-level loops</h2><p>Prefer <code>Profile Bracket From Outline</code>. Low-level Outer/Inner loops expose named segments when a feature needs a source boundary. Segments reference named points or guide corners, not coordinate endpoints. Loops close with required winding.</p>`,
-      },
-      code(
-        lPath,
-        "fixtures/FirmamentV2/Canonical/valid/profile-compose-l-bracket.firmament",
-      ),
-      {
-        type: "figure",
-        src: "/aetheris/assets/l-bracket.svg",
-        alt: "Extruded L-shaped profile with local top and bottom faces",
-        caption:
-          "An L-profile extruded in local +Z; source segments remain selectable.",
-      },
-      {
-        type: "html",
-        html: `<h2>Compose</h2><p>Compose materializes admitted prismatic stock and bounded cavities. A Base names Profile, From, To, and Role. It is not a general Boolean language and rejects cavity overlap or unadmitted hosts.</p><h2>Construction planes</h2><p><code>Construction Plane N { Trace: ConceptPlane }</code> freezes a frame. The hole route is narrow: simple Box, proper signed-permutation frame, Shaft, ThroughAll. Other hosts, orientations, extents, counterbores, and countersinks are unsupported.</p>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/mechanical/holes",
-    group: "Mechanical features",
-    title: "Holes: shaft, counterbore, countersink",
-    description:
-      "Declare hole intent with exact fields and bounded host/end policies.",
-    keywords: [
-      "Hole",
-      "Shaft",
-      "Counterbore",
-      "Countersink",
-      "CounterboreDepth",
-      "CountersinkAngle",
-      "ThroughAll",
-      "Blind",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">A Firmament hole is a semantic removal with named descendants, not an arbitrary cylinder subtracted from whatever overlaps it. This powers requirements, selections, PMI, and useful diagnostics.</p>`,
-      },
-      {
-        type: "matrix",
-        headers: [
-          "Variant",
-          "Required fields after On/From + Center",
-          "Frozen route",
-        ],
-        rows: [
-          [
-            "Shaft",
-            "Diameter, End",
-            "ThroughAll; documented face-local blind/drill-point; bounded construction plane",
-          ],
-          [
-            "Counterbore",
-            "Diameter, CounterboreDiameter, CounterboreDepth, End",
-            "Simple host and disjoint +Z Profile/Compose ThroughAll",
-          ],
-          [
-            "Countersink",
-            "Diameter, CountersinkDiameter, CountersinkAngle, End",
-            "Admitted simple host",
-          ],
-        ],
-      },
-      {
-        type: "html",
-        html: `<h2>Shaft</h2><p><code>On</code> selects an entry face; <code>From</code> selects a construction plane. Center is local. ThroughAll is simplest. Do not invent <code>Hole&lt;Blind&gt;</code>: Blind is an End, not a variant.</p><h2>Counterbore</h2>`,
-      },
-      code(
-        `Modify Base {
-    Hole<Counterbore> Mount {
-        On: +Z
-        Center: Point2(0mm, 0mm)
-        Diameter: 6mm
-        CounterboreDiameter: 11mm
-        CounterboreDepth: 4mm
-        End: ThroughAll
-    }
-}`,
-        "fixtures/FirmamentV2/Canonical/valid/counterbore-hole.firmament",
-      ),
-      {
-        type: "figure",
-        src: "/aetheris/assets/counterbore.svg",
-        alt: "Counterbore section with shaft diameter, counterbore diameter, and depth",
-        caption:
-          "Two coaxial semantic regions; all dimensional fields are explicit.",
-      },
-      {
-        type: "html",
-        html: `<h2>Countersink</h2><p>Add <code>CountersinkDiameter</code> and dimensioned <code>CountersinkAngle</code>. Construction-plane counterbores/countersinks, touching cavities, non-prismatic hosts, and unlisted end/orientation combinations are intentionally unsupported.</p>`,
-      },
-      code(
-        `Hole<Countersink> Mount {
-    On: +Z
-    Center: Point2(0mm, 0mm)
-    Diameter: 6mm
-    CountersinkDiameter: 12mm
-    CountersinkAngle: 90deg
-    End: ThroughAll
-}`,
-        "fixtures/FirmamentV2/Canonical/valid/countersink-hole.firmament",
-      ),
-    ],
-  },
-  {
-    route: "/aetheris/mechanical/slots-patterns",
-    group: "Mechanical features",
-    title: "Slots and practical patterns",
-    description:
-      "Create Capsule and RoundedRectangle slots, then repeat semantic features from static data.",
-    keywords: [
-      "Slot",
-      "Capsule",
-      "RoundedRectangle",
-      "CornerRadius",
-      "Pattern",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">Preview 1 supports Capsule and RoundedRectangle slots inside admitted Compose bodies. Both are through-all semantic removals.</p>`,
-      },
-      code(
-        `Slot<Capsule> Relief {
-    Center: Point2(0mm, 0mm)
-    Direction: Vector2(1, 0)
-    Length: 80mm
-    Width: 40mm
-    Extent: ThroughAll
-    Role: ThroughSlot
-}
-Selection ReliefEntry { Target: SlotEntry Source: Slot(Relief) Require: ClosedLoop }`,
-        "fixtures/FirmamentV2/Canonical/valid/semantic-slot-capsule.firmament",
-      ),
-      {
-        type: "html",
-        html: `<p>RoundedRectangle uses the same fields and additionally requires <code>CornerRadius</code>. No other slot family or extent is frozen. For bolt holes, put centers and diameters in a typed array, then Template and Pattern them; generated IDs are deterministic.</p>`,
-      },
-      code(
-        pattern,
-        "fixtures/FirmamentV2/Canonical/valid/docs-four-hole-pattern.firmament",
-      ),
-    ],
-  },
-  {
-    route: "/aetheris/mechanical/edge-finishes",
-    group: "Mechanical features",
-    title: "Edge finishes without anonymous-edge roulette",
-    description:
-      "Source-bound chamfer and fillet support, exact families, compatibility topology, and intentional invalid regimes.",
-    keywords: [
-      "EdgeFinish",
-      "Chamfer",
-      "Fillet",
-      "ExactRolling",
-      "SphereSeamCompatibility",
-      "ConvexSmall",
-      "NURBS",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">EdgeFinish operates on declared source geometry: a profile segment, connected chain, or admitted loop. It does not inspect the final B-rep and guess which edge the author probably meant. This is why selections remain stable—and why unsupported topology is rejected instead of “best-efforted” into a different model.</p><h2>Chamfer</h2><p>Chamfer uses <code>Kind: Chamfer</code> and <code>Distance</code>. Frozen Profile support includes Top/Bottom straight segments, connected chains, convex/reflex junctions, rounded-source cases, and admitted mixed line/arc whole loops. Patches are exact planes or cones, including bounded cone apex. There is no NURBS fallback.</p><p><strong>Interop note.</strong> The released chamfer evidence renders correctly in ACIS- and OCCT-based readers. Some Parasolid-based importers may fail to materialize these chamfers correctly; visually inspect chamfered parts after import. This is a downstream importer limitation, not an instruction to heal or approximate the exported exact geometry.</p>`,
-      },
-      code(
-        `${lPath}
-Modify Body {
-    EdgeFinish MixedTopBreak {
-        Target: Bracket.Outer
-        On: Top
-        Kind: Chamfer
-        Distance: 1mm
-    }
-}`,
-        "fixtures/FirmamentV2/Canonical/valid/profile-chamfer-mixed-convex-reflex-loop-top.firmament",
-      ),
-      {
-        type: "figure",
-        src: "/aetheris/assets/edge-finishes.svg",
-        alt: "Comparison of a planar chamfer and cylindrical fillet",
-        caption:
-          "Two different constructions, both bound to a declared source edge.",
-      },
-      {
-        type: "matrix",
-        headers: ["Chamfer route", "Status", "Family / note"],
-        rows: [
-          ["Straight; convex/reflex junction", "Supported", "Plane"],
-          ["Rounded convex/reflex source", "Bounded", "Plane/Cone"],
-          ["Mixed line/arc whole loop", "Supported", "Plane/Cone shell"],
-          ["Bounded cone apex", "Bounded", "Cone"],
-          [
-            "ConvexSmall: source radius < distance",
-            "Invalid",
-            "Collapsed inward offset",
-          ],
-          ["Generic NURBS fallback", "Unsupported", "Never substituted"],
-        ],
-      },
-      {
-        type: "html",
-        html: `<h2>Fillet</h2><p>Frozen support is narrower: one finite straight outer edge, or two adjacent straight segments at a convex/reflex 90° junction, on local Top or Bottom. Use <code>Radius</code>; <code>EndClearance</code> defaults to Radius. Exact families are Cylinder, Sphere, and Torus. A sharp convex cylinder-cylinder junction uses a direct analytic miter seam.</p>`,
-      },
-      code(
-        `${lPath}
-Selection ReflexNotch {
-    Source: Bracket.Outer.[Inner, Upright]
-    Require: ConnectedChain
-}
-Modify Body {
-    EdgeFinish ReflexRound {
-        Target: ReflexNotch
-        On: Top
-        Kind: Fillet
-        Radius: 2mm
-        EndClearance: 3mm
-    }
-}`,
-        "fixtures/FirmamentV2/Canonical/valid/profile-fillet-reflex-two-segment-top.firmament",
-      ),
-      {
-        type: "html",
-        html: `<h2>ExactRolling versus SphereSeamCompatibility</h2><p>These are geometry/topology policies, not STEP-writer switches. ExactRolling is the default reflex horn-torus rolling construction. SphereSeamCompatibility is an explicit opt-in with distinct sphere-seam topology for downstream importers that cannot retain the horn-torus seam. Both use the normal AP242 exporter and preserve source provenance; neither is universally “more correct.”</p>`,
-      },
-      {
-        type: "matrix",
-        headers: ["Fillet route", "Status", "Policy"],
-        rows: [
-          [
-            "Single finite straight edge",
-            "Supported",
-            "Exact quarter-cylinder",
-          ],
-          ["Two-line convex 90°", "Supported", "Cylinder + analytic miter"],
-          ["Two-line reflex 90°", "Supported", "ExactRolling default"],
-          ["Sphere seam reflex", "Compatibility", "Explicit opt-in"],
-          [
-            "Rounded source / seven-station loop",
-            "Experimental",
-            "Mass verification not release-tight",
-          ],
-          ["ConvexSmall", "Invalid", "Spindle/self-intersection"],
-          ["Arbitrary chains / generic fallback", "Unsupported", "Diagnose"],
-        ],
-      },
-      {
-        type: "html",
-        html: `<div class="warning"><strong>Experimental means experimental.</strong> The mixed seven-station whole-loop fillet builds and reimports, but Aetheris does not yet have an authoritative CIR/FRep occupied-volume model for this Profile family. Its display-derived B-rep mass estimate is diagnostic only. A successful artifact does not promote it. Reduce the request to a supported route or report the limitation.</div>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/semantics/require-pmi",
-    group: "Semantics",
-    title: "One number: Concept → Require → PMI",
-    description:
-      "Declare intent once, validate model semantics, then project the successful constraint into AP242 PMI.",
-    keywords: [
-      "Concept",
-      "Static",
-      "Require",
-      "PMI",
-      "From",
-      "As",
-      "DatumRefs",
-      "HoleDiameter",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">Concept/Static declares intent; Require validates selected intent against actual semantics; PMI explicitly projects a successful named requirement. The diameter should not be copied into geometry, validation, and a drawing callout as three numbers with independent opportunities for character development.</p><div class="pipeline"><span>Static value</span><b>→</b><span>Hole</span><b>→</b><span>named Require</span><b>→</b><span>SemanticConstraint</span><b>→</b><span>Pmi From / As</span></div>`,
-      },
-      code(
-        pmi,
-        "fixtures/FirmamentV2/Canonical/valid/pmi-projected-hole-diameter.firmament",
-      ),
-      {
-        type: "figure",
-        src: "/aetheris/assets/pmi.svg",
-        alt: "Plate with through hole, datum A, and diameter tolerance",
-        caption: "Datum and HoleDiameter are the current PMI kinds.",
-      },
-      {
-        type: "html",
-        html: `<h2>The projection fields</h2><dl><dt>From</dt><dd>The successful named Require.</dd><dt>As</dt><dd>Must be <code>HoleDiameter</code>.</dd><dt>DatumRefs</dt><dd>Defined datum labels such as <code>[A]</code>.</dd></dl><p>A projected declaration cannot override Target, Value, or Tolerance. Unknown/failed Requires, unknown datums, and overrides reject. When one Static value feeds Hole and Require, geometry, validation, and exported PMI change together.</p><div class="warning"><strong>Not in Preview 1:</strong> automatic Concept→PMI, export-all-Require, ontology inference, other PMI kinds, or a general GD&amp;T language.</div>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/verification",
-    group: "Verification",
-    title: "Assertions, inspection, analysis, and deterministic STEP",
-    description:
-      "Verify source intent against materialized/reimported B-rep and understand the curved-trim limit.",
-    keywords: [
-      "Assert Volume",
-      "Expected",
-      "Tolerance",
-      "Note",
-      "validate",
-      "verify",
-      "deterministic STEP",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede"><code>Assert Volume</code> is a source-level assertion. Build emits and reimports STEP so exact topology/interchange evidence stays separate from occupied-volume evidence. Bounded analytic measurements gate their admitted families; display-tessellation estimates may appear in diagnostics but are never authoritative. Assertion text does not alter STEP.</p>`,
-      },
-      code(
-        `Assert Volume Base {
-    Expected: 100000mm^3
-    Tolerance: 0mm^3
-    Note: "Rectangular stock"
-}`,
-        "fixtures/FirmamentV2/Canonical/valid/bare-box.firmament",
-      ),
-      {
-        type: "html",
-        html: `<dl><dt>Expected</dt><dd>Finite literal volume in mm^3.</dd><dt>Tolerance</dt><dd>Absolute, non-negative literal volume.</dd><dt>Note</dt><dd>Optional evidence metadata, not geometry.</dd></dl><h2>Which command knows what?</h2><ul><li><code>validate</code> checks language and semantic intent; it does not materialize every geometry policy.</li><li><code>build</code> plans/materializes exact geometry and is therefore where topology-policy errors such as ConvexSmall are reported.</li><li><code>inspect-profile</code>, <code>inspect-compose</code>, and <code>inspect-selections</code> expose normalized source semantics.</li><li><code>analyze</code> reads STEP topology/geometry and sequential IDs.</li><li><code>verify</code> reimports STEP and emits independent evidence.</li></ul><h2>Known limit</h2><p>The intended occupied-volume authority is CIR/FRep, complementary to exact B-rep topology and STEP interchange. Whole-loop Profile Fillet does not yet have that CIR mirror, so it remains Experimental. Its tessellated B-rep volume is a coarse sanity estimate, not certification.</p><h2>Determinism</h2><p>Fixed source/route emits canonical deterministic AP242 and advertised routes reimport/manifold-check. Exact surface families include Plane, Cylinder, Cone, Sphere, Torus, and bounded Hyperbola; curves are lines, circles, and arcs.</p>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/existing-step",
-    group: "Existing STEP",
-    title: "Analyze, recognize, and replace bounded semantics",
-    description:
-      "Use sequential topology IDs to recognize a canonical STEP region and replace one shaft hole.",
-    keywords: [
-      "InlineStep",
-      "Recognize",
-      "Replace",
-      "Faces",
-      "Source.Face",
-      "ADVANCED_FACE",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">This workflow labels and replaces one bounded recognized feature. It is not arbitrary reconstruction, magical decompilation, or a promise that a STEP file from a fax machine in 1997 contains recoverable intent.</p><h2>1. Analyze</h2><pre class="terminal"><code>aetheris analyze canonical-through-hole.step --json
-aetheris analyze canonical-through-hole.step --face 7 --json</code></pre><h2>2. Inline, recognize, replace</h2>`,
-      },
-      code(
-        `InlineStep Source {
-    Path: "../../InlineStep/testdata/canonical-through-hole.step"
-}
-Recognize Source {
-    Region MountHole {
-        Kind: HoleShaft
-        Confidence: High
-        Faces: [7]
-        Evidence: { SurfaceFamily: Cylindrical Radius: 1mm Through: true }
-    }
-}
-Replace Source.MountHole With Hole<Shaft> MountHole {
-    On: Source.Face(7)
-    Center: Point2(0mm, 0mm)
-    Diameter: 2mm
-    End: ThroughAll
-    HostSize: [10mm, 8mm, 6mm]
-}`,
-        "fixtures/FirmamentV2/Canonical/valid/inline-step-recognize-replace.firmament",
-      ),
-      {
-        type: "html",
-        html: `<h2>Two kinds of number</h2><p><code>Faces: [7]</code> and <code>Source.Face(7)</code> use sequential analysis IDs. Raw <code>ADVANCED_FACE #191</code> is traceability, not authoring vocabulary—roughly the difference between a building's tax-lot number and its third-floor conference room.</p><h2>Label without rebuilding</h2><p>Analyze and bounded recognition can label a canonical imported model without replacing it. Preview 1 can inspect those labels and use them for the admitted PMI/replacement route; it does not claim to persist arbitrary foreign feature history or every label through re-export.</p><h2>Boundary</h2><p>Preview 1 recognizes HoleShaft and DatumPlane. Replacement is verified ThroughAll Shaft with On, Center, Diameter, and HostSize. Input must be canonical Aetheris AP242; general foreign STEP and automatic recovery are unsupported.</p><h2>Appropriate difficulty</h2><p>Aetheris removes accidental complexity, not geometric complexity. A clean cylindrical through-hole should take an analysis ID and one recognition declaration. Reconstructing an ambiguous blend tree in malformed, spline-heavy STEP is genuinely hard; Preview 1 says so plainly instead of pretending it understood.</p>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/cli",
-    group: "CLI",
-    title: "Command-line reference",
-    description:
-      "Validate, build, view, inspect, analyze, and verify with stable JSON output.",
-    keywords: [
-      "CLI",
-      "validate",
-      "build",
-      "inspect-profile",
-      "analyze",
-      "verify",
-      "JSON",
-      "exit code",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">The CLI is both a human tool and the ground-truth inspection surface for automation. Add <code>--json</code> when another program—or a language model pretending not to be another program—consumes the result.</p>`,
-      },
-      {
-        type: "matrix",
-        headers: ["Command", "Input", "Purpose"],
-        rows: [
-          [
-            "validate",
-            ".firmament",
-            "Check syntax, binding, dimensions, and static semantics",
-          ],
-          [
-            "build",
-            ".firmament",
-            "Build adjacent .step; --output overrides the path",
-          ],
-          [
-            "view",
-            ".firmament / .step / .stp",
-            "Build if needed, then open the STEP artifact",
-          ],
-          [
-            "inspect",
-            ".firmament / .step / .stp",
-            "Show source semantics or STEP topology",
-          ],
-          [
-            "analyze",
-            ".step",
-            "Inspect geometry/topology/maps/sections/volume",
-          ],
-          [
-            "verify",
-            ".firmament / .step / .stp",
-            "Build source if needed, reimport, and verify",
-          ],
-        ],
-      },
-      {
-        type: "html",
-        html: `<pre class="terminal"><code>aetheris validate part.firmament
-aetheris build part.firmament
-aetheris inspect part.firmament --json
-aetheris verify part.firmament
-aetheris analyze part.step --face 7 --json
-aetheris view part.firmament
-aetheris view part.step</code></pre><h2>Defaults and exit behavior</h2><p><code>build</code> writes <code>part.step</code> beside <code>part.firmament</code> and deterministically replaces that generated artifact. Use <code>--output path.step</code> for another destination. <code>validate</code> does not materialize geometry; use <code>build</code> for geometry-policy diagnostics and STEP generation. Success is zero; command, validation, build, launch, and verification failures are non-zero. JSON keeps result fields and diagnostics on stdout without human prose.</p><h2>Cadmata launch</h2><p><code>view part.firmament</code> builds and opens its adjacent STEP; <code>view part.step</code> and <code>.stp</code> open directly without compilation. Aetheris hands Cadmata one normalized absolute path, checks that the process starts, and returns while the viewer remains open. Preview 1 starts a new Cadmata instance for every invocation.</p><p>Cadmata discovery checks <code>--cadmata-path</code>, <code>AETHERIS_CADMATA_PATH</code>, the compatibility <code>AETHERIS_CAD_ASSISTANT_PATH</code>, a sibling or package-relative <code>cadmata/Cadmata.exe</code>, PATH, and finally a source-development build. The legacy <code>--cad-assistant-path</code> flag remains accepted. Normal packaged use requires none of these overrides. Missing input, unsupported extensions, build failure, missing Cadmata, and process-launch failure are reported by the CLI; STEP import/display failure is shown inside Cadmata.</p>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/cookbook",
-    group: "Cookbook",
-    title: "Cookbook: from plate to semantic replacement",
-    description:
-      "A compact index of task-shaped, compiler-proven Preview 1 examples.",
-    keywords: [
-      "mounting plate",
-      "L-bracket",
-      "pattern",
-      "counterbore",
-      "chamfer",
-      "fillet",
-      "PMI",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">These recipes point to executable fixtures, because a cookbook whose recipes have never encountered heat is merely speculative literature.</p><div class="recipe-list"><article><h2>Mounting plate</h2><p>Start with the first Box, then add Shaft. Fixture: <a href="https://github.com/yuechen-li-dev/Aetheris/blob/master/fixtures/FirmamentV2/Canonical/valid/box-through-hole.firmament">box-through-hole</a>.</p></article><article><h2>L-bracket</h2><p>Author a six-step Concept Path and extrude it. Fixture: <a href="https://github.com/yuechen-li-dev/Aetheris/blob/master/fixtures/FirmamentV2/Canonical/valid/profile-compose-l-bracket.firmament">profile-compose-l-bracket</a>.</p></article><article><h2>Patterned holes</h2><p>Record → Static → Template → Pattern. Fixture: <a href="https://github.com/yuechen-li-dev/Aetheris/blob/master/fixtures/FirmamentV2/Canonical/valid/record-array-pattern-holes.firmament">record-array-pattern-holes</a>.</p></article><article><h2>Counterbored plate</h2><p>Use all three dimensional fields. Fixture: <a href="https://github.com/yuechen-li-dev/Aetheris/blob/master/fixtures/FirmamentV2/Canonical/valid/counterbore-hole.firmament">counterbore-hole</a>.</p></article><article><h2>Chamfered profile</h2><p>Select declared source, never a kernel edge. Fixture: <a href="https://github.com/yuechen-li-dev/Aetheris/blob/master/fixtures/FirmamentV2/Canonical/valid/profile-chamfer-mixed-convex-reflex-loop-top.firmament">mixed-loop chamfer</a>.</p></article><article><h2>Bounded fillet</h2><p>Use one straight edge or a two-line junction. Fixture: <a href="https://github.com/yuechen-li-dev/Aetheris/blob/master/fixtures/FirmamentV2/Canonical/valid/profile-fillet-reflex-two-segment-top.firmament">reflex fillet</a>.</p></article><article><h2>PMI-protected hole</h2><p>Bind Require and project it. Fixture: <a href="https://github.com/yuechen-li-dev/Aetheris/blob/master/fixtures/FirmamentV2/Canonical/valid/pmi-projected-hole-diameter.firmament">projected PMI</a>.</p></article><article><h2>STEP replacement</h2><p>Analyze → InlineStep → Recognize → Replace. Fixture: <a href="https://github.com/yuechen-li-dev/Aetheris/blob/master/fixtures/FirmamentV2/Canonical/valid/inline-step-recognize-replace.firmament">semantic replacement</a>.</p></article></div>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/reference/language",
-    group: "Reference",
-    title: "Firmament V2 language reference",
-    description: "Canonical declaration shapes and exact field spellings.",
-    keywords: [
-      "grammar",
-      "fields",
-      "CounterboreDepth",
-      "CountersinkAngle",
-      "DatumRefs",
-      "End",
-      "Heading",
-      "Radius",
-      "From",
-      "As",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">This page is intentionally boring in the good way. Grammar X1 uses PascalCase declarations and fields.</p>`,
-      },
-      {
-        type: "matrix",
-        headers: ["Declaration", "Required canonical shape", "Status"],
-        rows: [
-          ["Model", "Name { Units: mm … }", "Supported"],
-          ["Box", "Name { Size: [L,L,L] }", "Supported"],
-          ["Cylinder", "Radius; Height", "Supported"],
-          ["RoundedBox", "Size; CornerRadius", "Supported"],
-          ["Frustum", "BottomRadius; TopRadius; Height", "Supported"],
-          ["Concept Path", "Start; Heading; Line/Arc; Close", "Bounded"],
-          ["Profile", "From Path OR Loop Outer/Inner + Segment", "Bounded"],
-          ["Compose", "Base { Profile; From; To; Role }", "Bounded"],
-          ["Selection", "Target; Source; Require", "Bounded"],
-          ["Hole<Shaft>", "On|From; Center; Diameter; End", "Bounded"],
-          [
-            "Hole<Counterbore>",
-            "… + CounterboreDiameter; CounterboreDepth",
-            "Bounded",
-          ],
-          [
-            "Hole<Countersink>",
-            "… + CountersinkDiameter; CountersinkAngle",
-            "Bounded",
-          ],
-          [
-            "Slot<Capsule>",
-            "Center; Direction; Length; Width; Extent",
-            "Bounded",
-          ],
-          ["Slot<RoundedRectangle>", "… + CornerRadius", "Bounded"],
-          ["EdgeFinish Chamfer", "Target; On; Kind; Distance", "Bounded"],
-          [
-            "EdgeFinish Fillet",
-            "Target; On; Kind; Radius; EndClearance?; ReflexJunction?",
-            "Bounded",
-          ],
-          ["Record / Static", "typed schema / compile-time value", "Bounded"],
-          [
-            "Template / Pattern",
-            "one typed parameter / Over values",
-            "Bounded",
-          ],
-          ["Require", "comparison OR Actual; Expected; Tolerance", "Bounded"],
-          ["Assert Volume", "target { Expected; Tolerance; Note? }", "Bounded"],
-          ["Pmi Datum", "Label { Target }", "Bounded"],
-          ["Pmi HoleDiameter", "manual OR From; As; DatumRefs", "Bounded"],
-          [
-            "InlineStep / Recognize / Replace",
-            "bounded forms in tutorial",
-            "Bounded",
-          ],
-        ],
-      },
-      {
-        type: "html",
-        html: `<h2>Path entries</h2><dl><dt>Start</dt><dd>Point2(xmm, ymm).</dd><dt>Heading</dt><dd>Absolute angle in deg.</dd><dt>Line</dt><dd>Length plus optional relative Turn or absolute Heading.</dd><dt>Arc</dt><dd>Exact tangent arc with Radius and Sweep.</dd><dt>Close</dt><dd>Named final step to Start; explicit <code>To: Start</code> is also documented.</dd></dl><h2>Search spellings</h2><p><code>CounterboreDepth</code> · <code>CounterboreDiameter</code> · <code>CountersinkAngle</code> · <code>CountersinkDiameter</code> · <code>DatumRefs</code> · <code>ThroughAll</code> · <code>End</code> · <code>Heading</code> · <code>Radius</code> · <code>From</code> · <code>As</code>.</p>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/reference/support",
-    group: "Reference",
-    title: "Preview 1 support matrix",
-    description:
-      "The public boundary rendered from the frozen capability snapshot.",
-    keywords: [
-      "Supported",
-      "SupportedBounded",
-      "Experimental",
-      "Unsupported",
-      "support matrix",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">This table is rendered from a committed, hash-tied snapshot of <code>artifacts/release/preview1-capabilities.json</code>. SupportedBounded means real support under explicit admission rules, never partial success plus generic fallback.</p><div data-capability-matrix></div><h2>Status vocabulary</h2><dl><dt>Supported</dt><dd>Frozen public route.</dd><dt>SupportedBounded</dt><dd>Frozen within explicit host/topology/orientation/end rules.</dd><dt>Experimental</dt><dd>Executable evidence exists; not promoted.</dd><dt>CompatibilityOnly</dt><dd>Accepted for migration, not new source.</dd><dt>Unsupported</dt><dd>No Preview 1 route; expect a diagnostic.</dd></dl><div class="warning"><strong>Release blocker:</strong> mixed whole-loop fillet remains Experimental until curved-trim mass verification is release-tight and the freeze changes.</div>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/reference/diagnostics",
-    group: "Reference",
-    title: "Reading diagnostics",
-    description:
-      "What the compiler knows, why it rejected the model, and the bounded change that can make it valid.",
-    keywords: [
-      "diagnostic",
-      "unknown declaration",
-      "missing field",
-      "wrong dimension",
-      "ConvexSmall",
-      "unknown Datum",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">A useful diagnostic names the authoring fact that failed and the policy boundary involved. Many errors are exact field/dimension mistakes; others are intentional geometry limits.</p>`,
-      },
-      {
-        type: "matrix",
-        headers: ["Case", "Representative diagnostic", "Change"],
-        rows: [
-          [
-            "Unknown Hole variant",
-            "unknown Hole variant",
-            "Use Shaft, Counterbore, Countersink",
-          ],
-          [
-            "Missing field",
-            "canonical-primitive/modify-malformed",
-            "Add exact required field and dimension",
-          ],
-          ["Wrong point", "canonical-point2-invalid", "Use Point2(xmm, ymm)"],
-          [
-            "Construction-plane hole",
-            "HoleConstructionPlane…Unsupported",
-            "Box + signed-permutation + Shaft ThroughAll",
-          ],
-          [
-            "ConvexSmall chamfer",
-            "ProfileBoundaryChamferConvexArcRadiusTooSmall",
-            "Reduce distance or increase source radius",
-          ],
-          [
-            "ConvexSmall fillet",
-            "ProfileBoundaryFilletConvexArcSpindleUnsupported",
-            "Reduce radius or increase source radius",
-          ],
-          [
-            "Unsupported EdgeFinish",
-            "ProfileBoundaryFilletComposeUnsupported",
-            "Use admitted Profile route",
-          ],
-          [
-            "Failed Require",
-            "Require validation gate",
-            "Fix semantic mismatch",
-          ],
-          [
-            "PMI override",
-            "pmi-projected-field-must-not-override…",
-            "Remove projected overrides",
-          ],
-          [
-            "Unknown Require/Datum",
-            "projection-unknown-require / unknown Datum",
-            "Name earlier successful declarations",
-          ],
-        ],
-      },
-      {
-        type: "html",
-        html: `<h2>Intentional invalid regime</h2><p>When a convex source arc is smaller than the requested fillet, the locus is spindle-like and self-intersecting. The diagnostic means the compiler understood and rejected the exact policy. Do not invent <code>Fallback: NURBS</code>; no such field exists.</p><h2>Automation</h2><p>Run <code>validate … --json</code> for language/semantic checks, then <code>build … --json</code> to exercise materialization policy. Preserve identifier, location, and reason. Change documented fields or design intent; report unsupported policy instead of guessing grammar.</p>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/reference/compatibility",
-    group: "Reference",
-    title: "Compatibility syntax is not canonical syntax",
-    description:
-      "Understand accepted legacy forms without teaching them as new V2 authoring.",
-    keywords: [
-      "compatibility",
-      "legacy",
-      "lowercase",
-      "solid",
-      "phase-style",
-      "migration",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">Accepted does not mean recommended. New source uses PascalCase, a Model root, typed points, and dimensioned literals.</p><h2>Retained input</h2><ul><li>lowercase model/PMI and phase-style source</li><li><code>solid</code> bindings and older face-local holes required by compatibility</li><li>bracket points and legacy PMI <code>Dimension</code></li><li>lowercase InlineStep/recognize/replace</li><li>Solid, Let, Fill, Manufacturing, Feature, and Expose in internal fixtures</li></ul><h2>Migration</h2><p>Validate old input, translate casing, replace bracket points with Point2/Point3, and compare built/verified output. Do not mix dialects in new examples.</p>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/for-llms",
-    group: "For LLMs",
-    title: "Firmament quick context for frontier models",
-    description:
-      "A compact canonical contract designed to prevent hallucinated grammar and source archaeology.",
-    keywords: [
-      "LLM",
-      "prompt",
-      "grammar cheat sheet",
-      "authoring rules",
-      "error recovery",
-    ],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">Place this compact contract in context before requesting Preview 1 source. It favors exact names and negative rules over compiler internals. Approximate size: 850 words plus one task-specific example.</p><h2>Rules</h2><ol><li>Use <code>Model Name { Units: mm }</code>. Declarations and fields are PascalCase.</li><li>Lengths use mm, angles deg, volumes mm^3. Use typed Point2/Point3 and unitless Vector2/Vector3.</li><li>Never invent declarations, variants, or fields. Do not use lowercase compatibility syntax.</li><li>Prefer Concept Path for connected outlines, then Profile From Path.</li><li>Select source semantics. Never infer B-rep edge IDs. Imported STEP uses sequential analyzer face IDs, not ADVANCED_FACE entities.</li><li>Hole variants are exactly Shaft, Counterbore, Countersink. Blind is an End.</li><li>Chamfer support is broader. Supported Fillet is one straight edge or a two-line 90° junction. Whole-loop mixed Fillet is Experimental.</li><li>PMI is successful named Require → From + As: HoleDiameter + DatumRefs. Never override projected value/target/tolerance.</li><li>On unsupported policy, change the design or report the limit. Never invent Boolean, mesh, spline, or NURBS fallback.</li></ol><h2>Grammar cheat sheet</h2><pre class="cheat"><code>Model N { Units: mm … }
-Box N { Size: [L,L,L] }
-Cylinder N { Radius: L Height: L }
-RoundedBox N { Size: [L,L,L] CornerRadius: L }
-Frustum N { BottomRadius: L TopRadius: L Height: L }
-Concept Path N { Start: Point2(L,L) Heading: A Line S { Length: L } … Close S }
-Profile N From Path
-Struct N { Extrude N { Profile: N From: L To: L } }
-Selection N { Target: role Source: semantic-source Require: result-kind }
-Modify Body { Hole&lt;Shaft&gt; N { On: +Z Center: Point2(L,L) Diameter: L End: ThroughAll } }
-Counterbore adds CounterboreDiameter, CounterboreDepth
-Countersink adds CountersinkDiameter, CountersinkAngle
-EdgeFinish N { Target: source On: Top|Bottom Kind: Chamfer Distance: L }
-EdgeFinish N { Target: source On: Top|Bottom Kind: Fillet Radius: L EndClearance: L? }
-Record T { Field: Type } Static N: T[] = […] Template N(T x) { … }
-Pattern N Over Values { Template(Current) }
-Require N { Actual: semantic Expected: L Tolerance: PlusMinus(L,L) }
-Assert Volume Body { Expected: V Tolerance: V Note: "…" }
-Pmi { Datum A { Target: face(+Z) } HoleDiameter N { From: R As: HoleDiameter DatumRefs: [A] } }
-InlineStep N { Path: "…" } Recognize N { Region … } Replace N.Region With Hole&lt;Shaft&gt; …</code></pre>`,
-      },
-      {
-        type: "html",
-        html: `<h2>VS Code</h2><p>The Aetheris Firmament extension recognizes <code>.firmament</code> files. Its Problems entries come from the real CLI, not an editor-side parser. Do not infer language or geometry support from syntax highlighting. When a build diagnostic reports an unsupported geometry regime, respect the frozen capability matrix rather than inventing syntax.</p><h2>See the result</h2><pre class="terminal"><code># Need to see Firmament?
-aetheris view model.firmament
+const feaDisplacementMm =
+  generated.measurements.fea.maximumDisplacementMeters * 1000;
+const feaVonMisesMpa =
+  generated.measurements.fea.maximumVonMisesPascal / 1_000_000;
+const mesh = generated.measurements.mesh;
 
-# Already have STEP?
-aetheris view model.step</code></pre><p>Use the CLI. Do not manually start frontend servers, guess Cadmata ports, or search the repository for frontend launch scripts.</p><h2>Error recovery</h2><p>Run <code>aetheris validate file.firmament --json</code>, then build supported geometry to reach materialization-policy checks. For malformed declarations, consult field reference. For unsupported policy, narrow to the support matrix. Retry after a grammar correction. Never inspect parser source to guess syntax; report a documentation gap.</p><h2>Unsupported</h2><p>Runtime scripting; arbitrary Booleans; foreign STEP decompilation; automatic recovery; mesh/NURBS production fallback; general GD&amp;T; automatic PMI; construction-plane counterbores/countersinks; unlisted slots; broad fillet chains; mixed whole-loop fillet as Supported.</p>`,
-      },
-    ],
-  },
-  {
-    route: "/aetheris/architecture",
-    group: "Advanced",
-    title: "The pipeline, one layer deeper",
-    description:
-      "Optional context for why source identity and exact policy appear in the language.",
-    keywords: ["AST", "AIR", "B-rep", "STEP", "architecture", "CIR", "FRep"],
-    blocks: [
-      {
-        type: "html",
-        html: `<p class="lede">Using Firmament does not require compiler class names. This exists because engineers reasonably ask what happens between text and several thousand STEP parentheses.</p><div class="pipeline"><span>typed source</span><b>→</b><span>normalized semantics</span><b>→</b><span>AIR / intent</span><b>→</b><span>exact B-rep plan</span><b>→</b><span>AP242 + reimport evidence</span></div><h2>Normalization</h2><p>Compatibility input enters one semantic model. Static constructs expand deterministically; provenance and source identities survive.</p><h2>Constructive intent</h2><p>AIR describes admitted construction, not UI actions. Strategy choices record policy before export—for example ExactRolling versus SphereSeamCompatibility.</p><h2>Evidence</h2><p>STEP is reimported and measured, so assertions test what was emitted. CIR/FRep are internal evidence/mirroring concepts where relevant, not required vocabulary or another public modeling language.</p>`,
-      },
-    ],
-  },
-];
+const page = (
+  route: DocPage["route"],
+  group: string,
+  title: string,
+  description: string,
+  keywords: string[],
+  blocks: DocBlock[],
+  eyebrow?: string,
+): DocPage => ({ route, group, title, description, keywords, blocks, eyebrow });
 
 export const NAV_GROUPS = [
-  "Introduction",
+  "Start",
   "Firmament V2",
+  "Forge",
   "Geometry",
-  "Mechanical features",
-  "Semantics",
-  "Verification",
-  "Existing STEP",
-  "CLI",
-  "Cookbook",
-  "Reference",
-  "For LLMs",
-  "Advanced",
+  "Analysis",
+  "Assemblies",
+  "Examples",
+  "Tools & reference",
 ] as const;
+
+export const DOC_PAGES: DocPage[] = [
+  page(
+    "/aetheris/",
+    "Start",
+    "Engineering intent that survives compilation",
+    "Aetheris Preview 2 is an exact CAD compiler, typed engineering language, extension platform, analysis pipeline, and assembly compiler built on one semantic substrate.",
+    ["overview", "CAD", "Firmament", "Forge", "FEA", "assembly"],
+    [
+      html(
+        `<section class="hero-story"><p class="lede">Write the part as engineering intent. Keep its exact boundary. Name the geometry people care about. Then let the same names flow into meshes, analysis, host applications, and assemblies.</p><div class="hero-actions"><a class="primary-link" href="/aetheris/getting-started">Compile a first part</a><a href="/aetheris/architecture">See the platform map</a></div></section>`,
+      ),
+      { kind: "architectureDiagram", variant: "platform" },
+      html(
+        `<h2>One platform, several useful lowering paths</h2><div class="feature-grid"><article><h3>Firmament V2</h3><p>A statically evaluated, typed metaprogramming DSL for parts, semantics, analyses, and assemblies.</p></article><article><h3>Exact + structured geometry</h3><p>Exact BRep remains authoritative while SurfaceMeshIR preserves analytic supports and structured polygons before OBJ/STL lowering.</p></article><article><h3>Analysis with names</h3><p>Continuum and linear-elastic FEA bind constraints and loads to semantic geometry, not brittle anonymous element sets.</p></article><article><h3>Forge, without a kernel fork</h3><p>Host Firmament Templates or add trusted company-specific construction capabilities in C#.</p></article></div>`,
+      ),
+      html(
+        `<h2>Preview 2, stated carefully</h2><p><strong>Supported</strong> means a current regression-tested contract. <strong>Bounded</strong> means real behavior with a deliberately limited domain. <strong>Experimental</strong> means implemented evidence exists but the contract may move. Unsupported capability is named rather than approximated.</p><p><a href="/aetheris/reference/features">Browse the implementation-synchronized feature status →</a></p>`,
+      ),
+      html(
+        `<h2>Why this shape?</h2><ul><li>Semantic intent survives lowering.</li><li>Exact BRep is retained.</li><li>Parts are programs plus typed data.</li><li>Extensions do not require Kernel.Core forks.</li><li>Analysis binds to semantic geometry.</li><li>Assemblies know physical relationships.</li><li>Tolerance stackups are compiler analysis.</li></ul><p><a href="/aetheris/why-aetheris">Read the technical case for Aetheris →</a></p>`,
+      ),
+    ],
+    "Aetheris · Preview 2",
+  ),
+  page(
+    "/aetheris/getting-started",
+    "Start",
+    "Getting started with Firmament V2",
+    "Progress from an exact part to typed data, semantic output, imported STEP, analysis, and an assembly without changing abstraction levels.",
+    ["quickstart", "install", "build", "Model", "Template"],
+    [
+      html(
+        `<div class="callout"><strong>Prerequisite</strong><p>Install the .NET SDK selected by Aetheris <code>global.json</code>, then run the CLI from the repository or an installed release.</p></div>`,
+      ),
+      literal(
+        "dotnet run --project Aetheris.CLI -- validate part.firmament\ndotnet run --project Aetheris.CLI -- build part.firmament --output out/part.step\ndotnet run --project Aetheris.CLI -- inspect part.firmament --json",
+        "PowerShell",
+        "Validate, build exact STEP AP242, then inspect the semantic result.",
+      ),
+      { kind: "markdown", source: "quickstart" },
+    ],
+  ),
+  page(
+    "/aetheris/why-aetheris",
+    "Start",
+    "Why Aetheris?",
+    "The architectural differences are less about syntax and more about what remains knowable after a part is compiled.",
+    ["semantic intent", "exact BRep", "compiler", "tolerance"],
+    [
+      html(
+        "<h2>CAD output is not the whole product</h2><p>Aetheris retains exact topology and a semantic graph. A face can still be “the bearing seat” when the same part reaches Selection, FEA, Forge, or an Assembly Role. That is more durable than teaching every downstream tool a particular edge number.</p><h2>Programs and data, not copied parts</h2><p>Records, Static Tables, <code>with</code>, and Templates make standards families inspectable compiler inputs. Specialization provenance records which row, override, Match arm, and argument produced an instance.</p><h2>Analysis is connected to authoring</h2><p>Loads and constraints resolve through exact semantic bindings. Assembly Fits and Relations become typed dimensional graph transitions. A worst-case stackup is checked during compilation with every contribution retained.</p><h2>Capability can arrive locally</h2><p>Forge extensions can contribute validated exact BRep, optional CIR associations, and semantic members. Company-specific construction need not expand the trusted general-purpose kernel.</p>",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/firmament/philosophy",
+    "Firmament V2",
+    "Firmament is compiler metaprogramming for engineering",
+    "Firmament expresses engineering intent and deterministic compile-time variation; it is not a runtime scripting environment.",
+    ["language philosophy", "metaprogramming", "Kernel", "Forge"],
+    [
+      html(
+        `<h2>What it is</h2><p>Firmament is Aetheris's typed compiler metaprogramming DSL. It declares immutable values, construction intent, semantic contracts, analysis bindings, and physical relationships. Records, Tables, Templates, Match, Pattern, and Require are evaluated before feature AIR.</p><h2>What it is not</h2><ul><li>not C++ for CAD;</li><li>not Python embedded in a CAD session;</li><li>not a mutable runtime scripting language;</li><li>not a general symbolic mathematics system.</li></ul><h2>Three boundaries</h2><dl class="definition-grid"><dt>Firmament</dt><dd>Engineering intent and compiler metaprogramming.</dd><dt>Forge</dt><dd>Typed host embedding and trusted extension capabilities.</dd><dt>Kernel</dt><dd>The proven shared substrate for exact construction, topology, semantics, and lowering.</dd></dl>`,
+      ),
+      { kind: "architectureDiagram", variant: "platform" },
+    ],
+  ),
+  page(
+    "/aetheris/firmament/language-tour",
+    "Firmament V2",
+    "Language tour",
+    "A map of Firmament's compile-time values, geometric construction, semantics, analysis, and relational assembly declarations.",
+    ["tour", "Model", "Concept", "Template", "Analysis", "Assembly"],
+    [
+      code(
+        "tableTemplate",
+        "A complete Table → Record → Template → Concept Path → Compose workflow.",
+        "Static data, specialization, semantic construction, and exact geometry",
+      ),
+      html(
+        `<h2>Read the language in layers</h2><ol><li><strong>Values:</strong> Units, literals, <code>let</code>, <code>tol</code>, Records, Tables, and <code>with</code>.</li><li><strong>Intent:</strong> Concepts, Structs, Expose, semantic datums, Profiles, Compose, Modify, and bounded features.</li><li><strong>Compile-time variation:</strong> Templates, Match, Pattern, and Require.</li><li><strong>Consumers:</strong> imported STEP recognition, FEA Analysis, Interfaces/Mates, and assertions.</li></ol><p>The <a href="/aetheris/reference/language">language reference</a> is normative. Guides explain why and when to use the constructs.</p>`,
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/firmament/values-tolerances",
+    "Firmament V2",
+    "Values, units, let, and tolerance",
+    "Typed immutable values drive nominal geometry while tolerance remains symbolic engineering intent.",
+    ["let", "tol", "PlusMinus", "Dimension", "units"],
+    [
+      literal(
+        "Model Spacer {\n    Units: mm\n    let Bore: Length = 20mm tol PlusMinus(0.01mm)\n    let Seat: Length = 5mm tol PlusMinus(0.03mm, 0.02mm)\n}",
+        "spacer-values.firmament",
+        "Canonical Model spelling for bilateral and asymmetric tolerances.",
+      ),
+      html(
+        "<h2>Nominal geometry stays nominal</h2><p><code>tol</code> attaches an interval to a nominal Length or Angle. Aetheris does <strong>not</strong> randomly perturb the geometry and does not turn a tolerance into a Monte Carlo instruction. Exact construction receives the nominal value; symbolic interval propagation feeds validation and stackups.</p><h2><code>let</code> versus <code>Dimension</code></h2><p>An ordinary <code>let Length</code> is a compile-time scalar. An Assembly <code>Dimension</code> is a named semantic value with <code>DimensionalCapable</code>, an exact toleranced binding, stable provenance, and eligibility for Fits and dimensional paths.</p><h2>Provenance survives specialization</h2><p>When a value comes from a Table row, a <code>with</code> derivation, or a Template argument, the specialization artifacts preserve that chain. Stackup reports can therefore say which standards row or override contributed an interval.</p>",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/firmament/records-tables-templates",
+    "Firmament V2",
+    "Records, Static Tables, with, and Templates",
+    "Encode finite engineering families as typed data and specialize deterministic construction without copy-paste parts.",
+    [
+      "Record",
+      "Static Table",
+      "with",
+      "Template",
+      "Match",
+      "Pattern",
+      "Require",
+    ],
+    [
+      code(
+        "hexBolt",
+        "The canonical standards-driven HexBolt family.",
+        "Keyed standard rows, with-derived specifications, Template specialization, and semantic output",
+      ),
+      html(
+        "<h2>The compilation order matters</h2><p>Records and Tables bind first. <code>with</code> creates a rechecked immutable record. Template parameters and defaults bind next; Require and Match select an admitted specialization; Pattern expands finite sources. Only then does feature AIR see the materialized declarations.</p><h2>Diagnostics are part of the contract</h2><p>Missing fields, wrong types, duplicate Table keys, unequal columns, default cycles, failed Require predicates, and recursive specializations are compile errors. Specialization identity and provenance are deterministic.</p><h2>Use a Table when the family is finite</h2><p>A keyed Static Table is a good fit for standard sizes. A general algorithm belongs in a Template or Forge capability—not in duplicated prose or hand-maintained JSON beside the source.</p>",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/firmament/semantics",
+    "Firmament V2",
+    "SemanticValue: one contract across origins",
+    "Native, imported, Template-produced, and Forge-produced values meet consumers through capabilities and exact bindings.",
+    [
+      "SemanticValue",
+      "SemanticReference",
+      "capabilities",
+      "provenance",
+      "Concept Path",
+    ],
+    [
+      { kind: "architectureDiagram", variant: "semantics" },
+      html(
+        "<h2>The normalized value</h2><p>A <code>SemanticReference</code> records the resolved path and consumer span. Its <code>SemanticValue</code> carries stable identity, structural capabilities, exact bindings, exposed children, authored/generated spans, and ordered provenance.</p><h2>Capability first, origin second</h2><p>Consumers ask for capabilities such as Boundary, Selectable, ExactPlane, AnalysisRegion, Axis, Plane, Point, or Dimension. Exact claims require exact bindings. The check is the same whether the producer was native Firmament, InlineStep/Recognize, a Template expansion, or Forge.</p><h2>Concept Path is a semantic construction</h2><p>A named Path and its segments retain identity through Profile and Compose. This is why downstream code can select an exposed concept rather than reverse-engineer topology IDs.</p>",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/firmament/datums-dimensions",
+    "Firmament V2",
+    "Point, Axis, Plane, and Dimension",
+    "Exact datum semantics connect authored parts to assembly placement, selection, and analysis contracts.",
+    ["Point", "Axis", "Plane", "Dimension", "Semantic"],
+    [
+      literal(
+        "Semantic Joint {\n    Point Origin = [0,0,0];\n    Axis Axis = [0,0,0] -> [0,0,1];\n    Plane Seat = [0,0,10] normal [0,0,1];\n    Dimension Diameter = 20mm tol +0.01mm -0.008mm;\n}",
+        "joint-semantics.firmament",
+        "Canonical Assembly-local exact datum syntax.",
+      ),
+      html(
+        `<h2>Bindings and capabilities</h2><div class="table-wrap"><table><thead><tr><th>Declaration</th><th>Exact binding</th><th>Primary uses</th></tr></thead><tbody><tr><td>Point</td><td>ExactPoint</td><td>anchors, coincidence, dimensional endpoints</td></tr><tr><td>Axis</td><td>origin + normalized direction</td><td>coaxial placement, rotational freedom</td></tr><tr><td>Plane</td><td>origin + oriented normal</td><td>seating, fixed regions, planar selection</td></tr><tr><td>Dimension</td><td>nominal/lower/upper/unit</td><td>Fit, Relations, tolerance stackup</td></tr></tbody></table></div><p>Definition-local bindings compose with each Part occurrence transform for world queries. Opposite Plane normals are currently angularly coincident; material-side meaning is not inferred.</p>`,
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/firmament/profiles-compose",
+    "Firmament V2",
+    "Profiles, Concept Path, Compose, and Modify",
+    "Construct exact planar intent, build bounded bodies, and apply admitted semantic modifications.",
+    [
+      "Profile",
+      "Concept Path",
+      "Compose",
+      "Modify",
+      "Hole",
+      "Pattern",
+      "EdgeFinish",
+      "Selection",
+    ],
+    [
+      code(
+        "profileBracket",
+        "A compile-tested L-bracket profile with counterbore and projected PMI.",
+        "Concept Path/Profile, Compose, Modify, semantic feature selection, and PMI",
+      ),
+      html(
+        "<h2>Path is intent, Profile is admitted geometry</h2><p><code>Concept Path</code> is an ordered planar construction of named Line/Arc/Close steps. Continuity, positive measures, winding, and stable provenance are checked before <code>Profile Name From Path</code> produces an exact profile.</p><h2>Bounded on purpose</h2><p><code>Compose</code> and <code>Modify</code> route to supported exact construction families. Holes, slots, patterns, and edge finishes are admitted by topology and termination policy. Unsupported combinations fail with diagnostics instead of silently approximating a general CAD operation.</p>",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/firmament/inline-step",
+    "Firmament V2",
+    "InlineStep, Recognize, and Replace",
+    "Bring canonical exact AP242 into the semantic pipeline without claiming arbitrary design-history recovery.",
+    ["InlineStep", "Recognize", "Replace", "STEP", "imported CAD"],
+    [
+      code(
+        "inlineStep",
+        "The canonical imported through-hole recognize-and-replace fixture.",
+        "Exact STEP import, evidence-backed recognition, SemanticValue, and bounded rematerialization",
+      ),
+      html(
+        "<h2>Existing CAD is first-class—within explicit bounds</h2><p><code>InlineStep</code> accepts canonical exact AP242 supported by the importer. <code>Recognize</code> binds verified face IDs to a named semantic region with evidence and confidence. The resulting SemanticValue can enter supported Selection, FEA, PMI, and Modify consumers.</p><h2>What recognition does not promise</h2><p>It does not reconstruct arbitrary feature history, manufacture exact Profiles from every imported loop, or infer Assembly datum capabilities. <code>Replace</code> currently supports a bounded recognized through-hole rematerialization workflow with verification.</p>",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/reference/language",
+    "Firmament V2",
+    "Definitive Firmament V2 language reference",
+    "The public, implementation-synchronized syntax and semantics contract for Supported and explicitly bounded language features.",
+    ["reference", "syntax", "grammar", "Firmament V2"],
+    [
+      html(
+        `<div class="source-note"><strong>Canonical source</strong><span>${generated.sources.languageReference}</span><code>sha256 ${generated.hashes.languageReference.slice(0, 16)}…</code></div>`,
+      ),
+      { kind: "markdown", source: "languageReference" },
+    ],
+  ),
+  page(
+    "/aetheris/reference/features",
+    "Firmament V2",
+    "Language and platform feature status",
+    "A searchable status explorer generated from the language audit and Preview 2 feature manifest.",
+    ["status", "Supported", "Experimental", "Bounded", "feature matrix"],
+    [
+      html(
+        "<h2>How to read status</h2><p><strong>Supported</strong> is the current regression-tested contract. <strong>Bounded</strong> is a real, tested domain with named edges. <strong>Experimental</strong> has implementation evidence but a moving public contract. <strong>Legacy</strong> remains only for compatibility. Unsupported work is not approximated.</p>",
+      ),
+      { kind: "featureExplorer" },
+    ],
+  ),
+  page(
+    "/aetheris/forge/host-sdk",
+    "Forge",
+    "Forge Host SDK",
+    "Embed Aetheris through typed Template invocation and validated result artifacts rather than raw kernel calls.",
+    ["ForgeHost", "C#", "Template invocation", "SDK"],
+    [
+      code(
+        "forgeHost",
+        "The current compile-tested Forge host/evidence program.",
+        "Module loading, generated typed binding, exact BRep/CIR targets, determinism, provenance, validation, and artifact access",
+      ),
+      html(
+        `<h2>The supported host boundary</h2><p>Forge binds typed parameters, imported STEP resources, compiler diagnostics, deterministic provenance, and result artifacts. The repository's generated sample bindings demonstrate the exact callable surface. Raw Kernel.Core construction is not the recommended embedding API.</p><h2>Results stay ordinary</h2><p>A successful invocation can return exact STEP/BRep artifacts, optional CIR association, semantic roots/members, and analysis output. Those semantic members participate in the same downstream capability checks as native Firmament values.</p><p><a href="https://github.com/yuechen-li-dev/Aetheris/tree/master/Aetheris.Forge.SampleExtension.Bindings">Open the compile-tested generated binding sample →</a></p>`,
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/forge/extension-sdk",
+    "Forge",
+    "Forge Extension SDK",
+    "Add trusted company-specific construction with descriptors, typed validation, exact output, and semantic members—without modifying Kernel.Core.",
+    ["Forge extension", "capability descriptor", "ConstructionIR", "ExactBrep"],
+    [
+      code(
+        "forgeExtension",
+        "The current compile-tested sample extension.",
+        "Capability descriptor, typed admission, ConstructionIR, exact BRep, optional CIR, SemanticValue members, provenance, and deterministic output",
+      ),
+      html(
+        `<h2>Descriptor → validate → construct → validate output</h2><p>An extension declares a stable capability descriptor and typed fields. It validates inputs, returns one admitted ConstructionIR or validated ExactBrep output, and may attach CIR association and SemanticValues. Forge validates artifact integrity and provenance at the trust boundary.</p><h2>Bounded extension contract</h2><p>Capabilities are explicitly registered and trusted. Current output tiers are bounded; general plugin discovery, arbitrary nested assembly output, and unrestricted loft/source generation are not production contracts.</p><p><a href="https://github.com/yuechen-li-dev/Aetheris/tree/master/Aetheris.Forge.SampleExtension">Open the real sample extension →</a></p>`,
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/forge/capability-lifecycle",
+    "Forge",
+    "Capability lifecycle",
+    "Keep experimental local construction local, then graduate only broadly reusable and fully proven substrate.",
+    ["capability", "graduation", "extension", "Kernel"],
+    [
+      html(
+        `<h2>Local first</h2><p>A missing company-specific feature starts as an explicitly registered Forge capability. Its descriptor, validation, exact output, semantic members, determinism, and performance are testable without increasing Kernel.Core's permanent surface.</p><h2>Graduation is evidence-based</h2><p>A capability belongs in shared Kernel/StandardLibrary only when its semantics are general, its failure domain is understood, exact construction is proven, and downstream contracts no longer depend on extension-specific behavior.</p>`,
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/geometry/exact-brep",
+    "Geometry",
+    "Exact BRep and STEP AP242",
+    "Exact boundary and topology remain authoritative for construction, inspection, verification, and interchange.",
+    ["BRep", "STEP", "AP242", "exact geometry"],
+    [
+      html(
+        "<h2>Exact does not mean anonymous</h2><p>Firmament lowers admitted construction to exact BRep and deterministic STEP AP242 while preserving semantic source maps. Verification can reimport output, inspect topology and analytic surfaces, and evaluate mass properties such as <code>Assert Volume</code>.</p><h2>Dual representations have different jobs</h2><p>BRep describes the exact boundary/topology. CIR describes occupied continuum. SurfaceMeshIR describes a structured surface discretization. None is treated as a lossy replacement for all the others.</p>",
+      ),
+      code(
+        "bareBox",
+        "The smallest canonical exact part.",
+        "Model, Units, exact primitive construction, and deterministic STEP output",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/geometry/surface-mesh-ir",
+    "Geometry",
+    "SurfaceMeshIR: structured surfaces before triangles",
+    "Lower exact STEP/Firmament geometry into analytic-support-aware quads and polygons, then export OBJ or STL.",
+    ["SurfaceMeshIR", "OBJ", "STL", "mesh", "HexBolt", "CTC-01"],
+    [
+      {
+        kind: "figure",
+        src: "/aetheris/assets/preview2/hexbolt-isometric.png",
+        alt: "Actual generated isometric HexBolt geometry",
+        caption:
+          "Actual HexBolt Template output used by the Preview 2 evidence lane.",
+      },
+      {
+        kind: "figure",
+        src: "/aetheris/assets/preview2/hexbolt-surface-mesh.png",
+        alt: "SurfaceMeshIR provenance visualization for CTC-01 faces",
+        caption:
+          "Actual generated SurfaceMeshIR provenance view for bounded CTC-01 feature bands.",
+      },
+      html(
+        "<h2>Triangles are a target, not the internal language</h2><p>SurfaceMeshIR retains analytic supports, trim provenance, feature bands, and structured quads/polygons. OBJ can preserve polygon structure; STL is an explicitly triangulated lowering target.</p><h2>Current boundary</h2><p>Preview 2 covers analytic supports, planar holes/bands, Hyperbola and sampled non-rational B-spline trims. NURBS support surfaces are not claimed. HexBolt and CTC-01 are the evidence fixtures.</p>",
+      ),
+      html(
+        `<h2>Measured HexBolt OBJ result</h2><div class="metric-strip"><div><strong>${mesh.patchCount}</strong><span>surface patches</span></div><div><strong>${mesh.polygonCount}</strong><span>polygons</span></div><div><strong>${mesh.quadPercentage.toFixed(1)}%</strong><span>quads</span></div><div><strong>${mesh.watertight ? "yes" : "no"}</strong><span>watertight</span></div></div><p>${mesh.pipeline}; ${mesh.finalTriangleCount} triangles only after final target lowering. These values come from the synchronized Preview 2 mesh evidence JSON.</p>`,
+      ),
+      literal(
+        "aetheris mesh part.step --format obj --output part.obj --debug-ir part.mesh.json --json\naetheris mesh part.firmament --format stl --output part.stl --json",
+        "PowerShell",
+        "Current mesh CLI syntax.",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/analysis/continuum",
+    "Analysis",
+    "Continuum: from exact boundary to occupied domain",
+    "CIR supplies a representation of occupied continuum for analysis while exact BRep remains the boundary/topology authority.",
+    ["CIR", "Continuum", "SDF", "Cut cells", "BoundaryOffsetMap"],
+    [
+      { kind: "architectureDiagram", variant: "analysis" },
+      html(
+        "<h2>Why a continuum representation exists</h2><p>FEA needs volume occupancy, interior cells, and boundary integration—not only a list of exact faces. Shared constructive intent dual-lowers to exact BRep and CIR. SDF is a CIR backend, not the authority replacing BRep.</p><h2>Regular lattice, honest boundary</h2><p>Interior regions use a regular lattice. Boundary-intersecting cells become Cut cells. <code>BoundaryOffsetMap</code> and graphics-inspired multisample boundary sampling retain local boundary placement for integration and constraints.</p><h2>Deliberate limits</h2><p>Aetheris does not assume arbitrary BRep-to-CIR recovery or CIR/SDF-to-exact-BRep reconstruction. Supported native and imported domains are admitted explicitly.</p>",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/analysis/fea",
+    "Analysis",
+    "Linear-elastic FEA with semantic boundary conditions",
+    "Compile supported Firmament Analysis declarations to AnalysisIR, Continuum Cut cells, a native linear-elastic solve, and an Abaqus verification deck.",
+    ["FEA", "Analysis", "material", "traction", "force", "pressure", "Abaqus"],
+    [
+      code(
+        "plateWithHole",
+        "The canonical plate-with-hole linear-elastic analysis.",
+        "Semantic regions, material, fixed boundary, load, requested results, native solve, and deck export",
+      ),
+      html(
+        "<h2>Supported declaration</h2><p>An <code>Analysis</code> names a native or admitted InlineStep source, one isotropic material, fixed-displacement regions, traction vectors, resultant-force vectors, pressure scalars, and requested Displacement, Strain, Stress, or ReactionForce fields. Regions must resolve to exact semantic bindings.</p><h2>Lowering and solve</h2><p>AnalysisIR contains engineering regions rather than node IDs. Continuum creates a regular lattice and Cut-cell boundary representation. The current native solver implements bounded small-strain linear isotropic elasticity.</p><h2>Verification export</h2><p>The CLI emits an Abaqus <code>.inp</code> verification deck where the discretization is representable. Aetheris does not claim that commercial Abaqus was executed; users need their own Abaqus installation.</p>",
+      ),
+      html(
+        `<h2>Measured canonical result</h2><div class="metric-strip"><div><strong>${feaDisplacementMm.toFixed(6)} mm</strong><span>maximum displacement</span></div><div><strong>${feaVonMisesMpa.toFixed(3)} MPa</strong><span>maximum von Mises stress</span></div><div><strong>${generated.measurements.fea.residualNewton.toExponential(3)} N</strong><span>force residual</span></div></div><p>These values are synchronized from the current native result packet, not copied into prose.</p>`,
+      ),
+      literal(
+        "aetheris fea docs/fea/artifacts/m5/plate-with-hole.firmament --out-dir artifacts/plate --json",
+        "PowerShell",
+        "Runs the native solve and writes analysis/result artifacts plus the Abaqus input deck.",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/assemblies/interfaces-mates",
+    "Assemblies",
+    "Interfaces, Roles, Mates, and placement",
+    "Describe physical relationships independently from the product tree, then lower them into instance transforms and dimensional consequences.",
+    [
+      "Interface",
+      "Role",
+      "Mate",
+      "Assembly",
+      "Anchor",
+      "Lower",
+      "Fit",
+      "Allow",
+    ],
+    [
+      { kind: "architectureDiagram", variant: "assembly" },
+      html(
+        `<h2>The mental model</h2><p><strong>Concepts describe one thing.</strong> Interfaces describe a physical relationship between named Roles. Mates instantiate an Interface with actual Part semantics.</p><p>The Assembly product structure is a tree: one occurrence has one structural parent. Mate topology is a graph: physical relationships can cross structural branches.</p><h2>Relational vocabulary</h2><dl class="definition-grid"><dt>Role requires</dt><dd>Capabilities a participant must provide.</dd><dt>Lower</dt><dd>Axis/Plane/Point coincidence, alignment, or axial offset consequences.</dd><dt>Fit</dt><dd>A typed clearance interval and dimensional transition—not an ISO fit-class database.</dd><dt>Allow</dt><dd>An admitted residual translation or rotation freedom.</dd><dt>Anchor</dt><dd>The owning occurrence fixed at identity before Mate solving.</dd></dl>`,
+      ),
+      code(
+        "templateBlockPair",
+        "Template-produced definitions instantiated and placed through a typed Interface.",
+        "Definitions versus occurrences, semantic world transforms, residuals, Fit, and Template provenance",
+      ),
+      literal(
+        "aetheris asm inspect fixtures/AssemblyM1/template-block-pair.firmament --json --out artifacts/template-block-pair.json",
+        "PowerShell",
+        "Inspect the product tree, Mate table, placements, residuals, and tolerance result.",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/assemblies/tolerance-stackup",
+    "Assemblies",
+    "Automatic worst-case tolerance stackup",
+    "Compile a deterministic dimensional path, propagate signed intervals, and retain the complete provenance chain.",
+    [
+      "tolerance stackup",
+      "Relation",
+      "Fit",
+      "Assert ToleranceStackup",
+      "worst case",
+    ],
+    [
+      html(
+        `<h2>Compiler analysis, not geometry jitter</h2><p>Dimensions, Interface Fits, and explicit Relations form a bounded directed dimensional graph. <code>Assert ToleranceStackup</code> finds one deterministic path, sums signed nominal/lower/upper contributions, retains every source, and fails compilation if the minimum clearance requirement is not met.</p><h2>Pass and fail are both fixtures</h2><p>The bearing module's passing and intentionally failing sources differ at the requirement. Both exercise the real analyzer and prove that the assertion is an enforced compiler gate.</p>`,
+      ),
+      code(
+        "bearingModule",
+        "Passing bearing-module axial reach stackup.",
+        "Toleranced Dimensions, Interface Fits, explicit Relations, deterministic path search, and provenance",
+      ),
+      code(
+        "bearingModuleFailing",
+        "Intentional failing stackup used to regression-test the diagnostic.",
+        "The same graph with an unsatisfied minimum clearance",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/examples/bearing-module",
+    "Examples",
+    "Showcase: bearing module",
+    "A coherent assembly fixture combining semantic datums, Fits, Mates, product structure, and a six-contribution tolerance path.",
+    ["bearing", "shaft", "housing", "spacer", "showcase"],
+    [
+      { kind: "architectureDiagram", variant: "assembly" },
+      code(
+        "bearingModule",
+        "Canonical, compile-tested bearing-module source.",
+        "Housing, bearing, spacer, and shaft across product-tree branches and Mate/dimensional graphs",
+      ),
+      literal(
+        "aetheris asm inspect fixtures/AssemblyM0/bearing-module.firmament --json",
+        "PowerShell",
+        "Returns the product tree, Mate table, placement solution, dimensional graph, and assertion result.",
+      ),
+      html(
+        "<h2>Why this is a signature example</h2><p>The fixture does not add unrelated FEA. It stays focused on the physical module: shaft/bore clearance, seated-axis placement, named Datum/Seat/Shoulder points, standards-style Relation provenance, and a worst-case axial reach assertion.</p>",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/examples/template-block-pair",
+    "Examples",
+    "Showcase: Template-produced assembly",
+    "A compact second combined fixture proving that Record/Template output becomes ordinary semantic assembly input.",
+    ["Template", "Record", "assembly", "semantic output"],
+    [
+      code(
+        "templateBlockPair",
+        "Canonical M1 executable semantic product-geometry proof.",
+        "Static Records, Template specialization, exact body materialization, Expose, Interface, Mate, Fit, and tolerance assertion",
+      ),
+      html(
+        "<h2>Definition and occurrence are separate</h2><p>Each Template specialization creates a reusable definition artifact. Assembly Part tags create occurrences with their own transforms and world semantics. Inspection retains the Template arguments and Record provenance rather than flattening the parts into anonymous solids.</p>",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/examples/plate-with-hole",
+    "Examples",
+    "Showcase: plate with a circular hole",
+    "The canonical analysis fixture connects exact construction, named boundaries, Continuum lowering, native FEA, and an external verification deck.",
+    ["plate with hole", "stress concentration", "FEA", "Abaqus"],
+    [
+      code(
+        "plateWithHole",
+        "Compile-tested M5 plate-with-hole benchmark source.",
+        "A complete analysis workflow small enough to read",
+      ),
+      html(
+        `<h2>Measured, not invented</h2><div class="metric-strip"><div><strong>${feaDisplacementMm.toFixed(6)} mm</strong><span>maximum displacement</span></div><div><strong>${feaVonMisesMpa.toFixed(3)} MPa</strong><span>maximum von Mises stress</span></div><div><strong>10,000 N</strong><span>applied resultant</span></div></div><p>Values are synchronized from <code>docs/fea/artifacts/m5/displacement-stress-summary.json</code>. The artifact packet includes AnalysisIR, native results, sparse-system metrics, residual history, stress/displacement summary, and <code>verification.inp</code>.</p><p>This benchmark is for current regression and architecture evidence. It is not a claim of commercial Abaqus execution or general nonlinear/contact capability.</p>`,
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/examples/imported-step",
+    "Examples",
+    "Showcase: imported STEP becomes semantic input",
+    "Recognize a bounded region in exact imported CAD and use the normalized value in ordinary consumers.",
+    ["imported STEP", "Recognize", "SemanticValue", "Replace"],
+    [
+      code(
+        "inlineStep",
+        "Canonical InlineStep → Recognize → SemanticValue → Replace proof.",
+        "Existing exact CAD, evidence-backed region identity, and bounded downstream use",
+      ),
+      html(
+        "<h2>The important seam</h2><p>Downstream code does not branch on “native versus imported.” It asks whether the semantic value has the capability and exact binding it needs. That same seam admits Selection and FEA where supported.</p>",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/cli",
+    "Tools & reference",
+    "CLI reference",
+    "Current commands and flags, captured from the real Preview 2 CLI help rather than historical examples.",
+    ["CLI", "build", "inspect", "mesh", "fea", "asm inspect"],
+    [
+      html(
+        `<h2>Core commands</h2><div class="table-wrap"><table><thead><tr><th>Command</th><th>Purpose</th></tr></thead><tbody><tr><td><code>validate file.firmament</code></td><td>Parse, bind, and diagnose without materializing geometry.</td></tr><tr><td><code>build file.firmament [--output path] [--json]</code></td><td>Compile exact STEP AP242.</td></tr><tr><td><code>inspect file.firmament|file.step [--json]</code></td><td>Inspect Firmament semantics or route STEP to topology analysis.</td></tr><tr><td><code>mesh input [--format stl|obj] [--output path] [--debug-ir path] [--json]</code></td><td>Export supported exact BRep through SurfaceMeshIR.</td></tr><tr><td><code>fea analysis.firmament [--rotate x,y,z] [--out-dir dir] [--json]</code></td><td>Compile and solve supported linear elasticity; export verification artifacts.</td></tr><tr><td><code>asm inspect assembly.firmament [--json] [--profile] [--out report.json]</code></td><td>Inspect typed assembly tree, Mates, transforms, residuals, and tolerance results.</td></tr></tbody></table></div><h2>Forge capability inspection</h2><p>There is no current top-level <code>aetheris forge</code> command. Capability metadata and invocation live in the Forge host/SDK and evidence tooling; this manual does not invent a CLI seam.</p><h2>Compatibility commands</h2><p><code>asm exec</code> and <code>asm export</code> operate the deprecated flat <code>.firmasm</code> lane. Prefer typed Firmament Assembly source and <code>asm inspect</code>.</p>`,
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/cookbook",
+    "Tools & reference",
+    "Examples and cookbook",
+    "Choose a complete, canonical fixture by the engineering job it demonstrates.",
+    ["cookbook", "examples", "fixtures"],
+    [
+      html(
+        `<div class="link-cards"><a href="/aetheris/examples/template-block-pair"><strong>Parameterized part → assembly</strong><span>Record, Template, Expose, Interface, Mate</span></a><a href="/aetheris/examples/bearing-module"><strong>Bearing module stackup</strong><span>Roles, Fits, Relations, worst-case tolerance</span></a><a href="/aetheris/examples/imported-step"><strong>Existing STEP workflow</strong><span>InlineStep, Recognize, Replace</span></a><a href="/aetheris/examples/plate-with-hole"><strong>Plate-with-hole analysis</strong><span>Semantic boundaries, Continuum, FEA, Abaqus deck</span></a><a href="/aetheris/geometry/surface-mesh-ir"><strong>Structured mesh export</strong><span>STEP/Firmament → SurfaceMeshIR → OBJ/STL</span></a><a href="/aetheris/forge/extension-sdk"><strong>Company-specific construction</strong><span>Forge descriptor, validation, exact output, semantics</span></a></div>`,
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/for-llms",
+    "Tools & reference",
+    "For LLMs and tool authors",
+    "Generate against a typed, inspectable compiler contract and use exact diagnostics as the correction loop.",
+    ["LLM", "agent", "language metadata", "diagnostics"],
+    [
+      html(
+        `<h2>The useful proposition</h2><p>Aetheris is programmable at the same abstraction level models already understand: named engineering concepts, finite data tables, typed parameters, physical relationships, and assertions.</p><h2>Agent workflow</h2><ol><li>Read the <a href="/aetheris/reference/language">definitive language reference</a> and machine-synchronized <a href="/aetheris/reference/features">feature metadata</a>.</li><li>Author a small Firmament source and invoke <code>validate</code>.</li><li>Use exact diagnostic codes/spans to correct syntax, binding, or admissibility—not parser-source guesses.</li><li>Invoke reusable Templates through Forge.</li><li>When a genuinely missing local construction is required, implement a bounded Forge extension instead of emitting imaginary Firmament syntax or patching Kernel.Core.</li><li>Inspect semantic and output artifacts before composing a larger workflow.</li></ol><h2>Generation rules</h2><p>Do not equate parser acceptance with support. Do not invent flags. Do not address BRep topology IDs when a semantic path exists. Preserve Units and typed literals. Treat Experimental and Bounded as explicit contracts, not vague “beta” labels.</p>`,
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/architecture",
+    "Tools & reference",
+    "Platform architecture",
+    "How Firmament, Forge, exact BRep, semantics, SurfaceMeshIR, Continuum, FEA, and AssemblyIR share a compiler substrate.",
+    ["architecture", "AIR", "BRep", "CIR", "AssemblyIR"],
+    [
+      { kind: "architectureDiagram", variant: "platform" },
+      html(
+        "<h2>Authoring and host boundary</h2><p>Firmament binds typed source into compiler intent. Forge invokes Templates and contributes trusted extension outputs through validated contracts. Both feed the same semantic-value architecture.</p><h2>Geometry and analysis boundary</h2><p>Admitted construction lowers to exact BRep for boundary/topology and to CIR for occupied continuum. SurfaceMeshIR is a structured surface lane. AnalysisIR preserves semantic regions before Continuum and mechanics introduce cells, nodes, and degrees of freedom.</p><h2>Assembly boundary</h2><p>AssemblyIR holds the product tree, independent Mate graph, instance placements, world semantic bindings, residual freedoms, and dimensional transitions. Tolerance analysis is a compiler consumer of Dimensions, Fits, and Relations.</p>",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/vscode",
+    "Tools & reference",
+    "VS Code support",
+    "Language configuration, grammar, snippets, and editor diagnostics for Firmament source.",
+    ["VS Code", "extension", "syntax"],
+    [
+      html(
+        `<p>The repository extension under <code>tools/vscode-firmament</code> provides Firmament language configuration, syntax grammar, snippets, and editor integration. The compiler remains authoritative; highlighting does not promote a construct to Supported status.</p><p><a href="https://github.com/yuechen-li-dev/Aetheris/tree/master/tools/vscode-firmament">Open the extension source →</a></p>`,
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/reference/diagnostics",
+    "Tools & reference",
+    "Reading diagnostics",
+    "Treat diagnostics as typed compiler feedback about syntax, binding, capability, admissibility, lowering, or assertion failure.",
+    ["diagnostics", "errors", "validation"],
+    [
+      html(
+        "<h2>Fix the first causal error</h2><p>Run <code>aetheris validate file.firmament</code> before materialization. A diagnostic should identify the source span, stable code, and reason: unknown field, type mismatch, missing capability/exact binding, unsupported route, failed Require, or failed assertion.</p><h2>Unsupported is useful information</h2><p>An admissibility diagnostic means the requested topology/termination/representation is outside a bounded proven family. It is not an invitation to change spelling until the parser accepts something. Choose a supported strategy or implement a Forge extension.</p>",
+      ),
+    ],
+  ),
+  page(
+    "/aetheris/reference/compatibility",
+    "Tools & reference",
+    "Compatibility and historical syntax",
+    "Keep old fixtures readable without presenting their syntax or architecture as current Firmament V2.",
+    ["Legacy", "Preview 1", "firmasm", "compatibility"],
+    [
+      html(
+        "<h2>Current authority</h2><p>The definitive Firmament V2 reference and generated feature manifests override historical milestone notes. Legacy V1 TOON-style fixtures, alternate PMI spellings, and <code>.firmasm</code> may remain accepted in compatibility lanes; they are not canonical authoring guidance.</p><h2>Stable public URLs</h2><p>Useful Preview 1 documentation URLs remain aliases to their Preview 2 replacement pages. Historical feature claims such as “assemblies future,” “FEA future,” or SDF-as-universal-authority framing have been removed from primary content.</p>",
+      ),
+    ],
+  ),
+];

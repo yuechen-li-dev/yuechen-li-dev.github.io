@@ -1,23 +1,23 @@
 import {
+  type BoundaryPolicy,
   CompatFiles,
-  define,
-  defineDeps,
-  dep,
   JsonFile,
-  npm,
   Package,
   Policies,
   RunTargets,
   Security,
   Targets,
-  TsConfig,
-  tool,
   Tools,
+  TsConfig,
+  type TypePolicy,
   UpdatePolicy,
   VSCode,
   Workspace,
-  type BoundaryPolicy,
-  type TypePolicy,
+  define,
+  defineDeps,
+  dep,
+  npm,
+  tool,
 } from "tspack/manifest";
 
 // Generated from concept fragments:
@@ -46,6 +46,7 @@ const boundaries = {
 const deps = defineDeps({
   react: dep(npm("react", "^19.0.0")),
   reactDom: dep(npm("react-dom", "^19.0.0"), { key: "react-dom" }),
+  machinaLayout: dep(npm("machinalayout", "^0.7.0"), { key: "machinalayout" }),
   typescript: tool(npm("typescript", "^5.0.0")),
   vite: tool(npm("vite", "^6.4.3")),
   viteReact: tool(npm("@vitejs/plugin-react", "^4.0.0"), {
@@ -75,6 +76,7 @@ export default define(
         values: [
           deps.react,
           deps.reactDom,
+          deps.machinaLayout,
           deps.typescript,
           deps.vite,
           deps.viteReact,
@@ -105,7 +107,7 @@ export default define(
             entry: "src/main.tsx",
             runtime: "dist/main.js",
             types: "dist/main.d.ts",
-            deps: [deps.react, deps.reactDom],
+            deps: [deps.react, deps.reactDom, deps.machinaLayout],
           },
         ]}
       />
@@ -133,6 +135,16 @@ export default define(
             name: "docs-check",
             runtime: "node",
             command: ["node", "scripts/validate-docs.mjs", "--dist"],
+          },
+          {
+            name: "test",
+            runtime: "node",
+            command: ["node", "--test", "tests/docs.test.mjs"],
+          },
+          {
+            name: "lint",
+            runtime: "node",
+            command: ["biome", "lint", "."],
           },
           {
             name: "typecheck",

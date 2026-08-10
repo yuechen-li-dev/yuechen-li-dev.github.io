@@ -1,72 +1,92 @@
-import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const siteRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const aetherisRoot = resolve(siteRoot, "..", "Aetheris");
-const manifestPath = resolve(
-  aetherisRoot,
-  "artifacts/release/preview1-capabilities.json",
-);
 const outputPath = resolve(
   siteRoot,
-  "src/aetheris/generated/preview1-capabilities.json",
-);
-const source = await readFile(manifestPath, "utf8");
-const manifest = JSON.parse(source);
-const docsSource = await readFile(
-  resolve(siteRoot, "src/aetheris/content.ts"),
-  "utf8",
+  "src/aetheris/generated/preview2-docs.json",
 );
 
-const fixturePaths = new Set();
-for (const feature of manifest.features ?? []) {
-  for (const fixture of feature.fixturePaths ?? []) fixturePaths.add(fixture);
-}
-for (const fixture of manifest.invalidFixtures ?? [])
-  fixturePaths.add(fixture.fixturePath);
-for (const policy of manifest.edgeFinish?.invalidPolicies ?? [])
-  fixturePaths.add(policy.fixturePath);
-for (const match of docsSource.matchAll(
-  /fixtures\/[A-Za-z0-9_./-]+\.(?:firmament|firmfixture)/g,
-)) {
-  fixturePaths.add(match[0]);
+const sources = {
+  languageReference: "docs/firmament-v2/language-reference.md",
+  quickstart: "docs/firmament-v2/quickstart.md",
+  languageFeatures: "docs/firmament-v2/language-features.json",
+  platformFeatures: "docs/preview2/feature-manifest.json",
+};
+
+const fixturePaths = {
+  bareBox: "fixtures/FirmamentV2/Canonical/valid/bare-box.firmament",
+  tableTemplate:
+    "fixtures/FirmamentV2/Canonical/valid/table-template-concept-path-compose.firmament",
+  bearingModule: "fixtures/AssemblyM0/bearing-module.firmament",
+  bearingModuleFailing: "fixtures/AssemblyM0/bearing-module-failing.firmament",
+  templateBlockPair: "fixtures/AssemblyM1/template-block-pair.firmament",
+  plateWithHole: "docs/fea/artifacts/m5/plate-with-hole.firmament",
+  inlineStep:
+    "fixtures/FirmamentV2/Canonical/valid/inline-step-recognize-replace.firmament",
+  hexBolt: "testdata/firmament/examples/hexbolt_template_m2.firmament",
+  profileBracket:
+    "fixtures/FirmamentV2/Canonical/valid/profile-compose-l-bracket-counterbore-pmi.firmament",
+  forgeHost: "tools/Aetheris.Forge.M1Evidence/Program.cs",
+  forgeExtension: "Aetheris.Forge.SampleExtension/SecretGeometryExtension.cs",
+};
+
+async function text(path) {
+  return readFile(resolve(aetherisRoot, path), "utf8");
 }
 
-const missing = [];
-for (const fixture of fixturePaths) {
-  try {
-    await readFile(resolve(aetherisRoot, fixture));
-  } catch {
-    missing.push(fixture);
-  }
+const languageReference = await text(sources.languageReference);
+const quickstart = await text(sources.quickstart);
+const languageFeaturesSource = await text(sources.languageFeatures);
+const platformFeaturesSource = await text(sources.platformFeatures);
+const languageFeatures = JSON.parse(languageFeaturesSource);
+const platformFeatures = JSON.parse(platformFeaturesSource);
+const fixtures = {};
+for (const [key, path] of Object.entries(fixturePaths)) {
+  fixtures[key] = { path, source: await text(path) };
 }
-if (missing.length > 0)
-  throw new Error(
-    `Capability manifest references missing fixtures:\n${missing.join("\n")}`,
-  );
+
+const measurements = {
+  ...JSON.parse(
+    await text("docs/preview2/evidence/docsite-m2/measured-results.json"),
+  ),
+};
+
+const hashes = {};
+for (const [name, source] of Object.entries({
+  languageReference,
+  quickstart,
+  languageFeaturesSource,
+  platformFeaturesSource,
+})) {
+  hashes[name] = createHash("sha256").update(source).digest("hex");
+}
+for (const [name, fixture] of Object.entries(fixtures)) {
+  hashes[`fixture:${name}`] = createHash("sha256")
+    .update(fixture.source)
+    .digest("hex");
+}
 
 const snapshot = {
-  source: "Aetheris/artifacts/release/preview1-capabilities.json",
-  sourceSha256: createHash("sha256").update(source).digest("hex"),
-  syncedAt: manifest.generatedAt,
-  version: manifest.version,
-  commit: manifest.commit,
-  language: manifest.language,
-  features: manifest.features,
-  edgeFinish: manifest.edgeFinish,
-  pmi: manifest.pmi,
-  step: manifest.step,
-  verification: manifest.verification,
-  invalidFixtures: manifest.invalidFixtures,
-  releaseBlockers: manifest.releaseBlockers,
+  version: platformFeatures.version,
+  generatedAt: platformFeatures.generatedAt,
+  sources,
+  hashes,
+  languageReference,
+  quickstart,
+  languageFeatures: languageFeatures.features,
+  platformFeatures: platformFeatures.features,
+  fixtures,
+  measurements,
 };
 
 await mkdir(dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${JSON.stringify(snapshot, null, 2)}\n`, "utf8");
-const biome = spawnSync(
+const format = spawnSync(
   process.execPath,
   [
     resolve(siteRoot, "node_modules/@biomejs/biome/bin/biome"),
@@ -76,11 +96,24 @@ const biome = spawnSync(
   ],
   { cwd: siteRoot, encoding: "utf8" },
 );
-if (biome.status !== 0) {
+if (format.status !== 0) {
   throw new Error(
-    `Could not format the generated capability snapshot:\n${biome.stderr || biome.stdout}`,
+    `Could not format the generated Preview 2 snapshot:\n${format.stderr || format.stdout}`,
   );
 }
+
+const visualAssets = {
+  "hexbolt-isometric.png":
+    "docs/preview2/evidence/hexbolt-m1/generated-isometric.png",
+  "hexbolt-surface-mesh.png":
+    "docs/preview2/evidence/surface-mesh-ir-m7/ctc-faces-3-98-provenance.png",
+};
+const assetRoot = resolve(siteRoot, "public/aetheris/assets/preview2");
+await mkdir(assetRoot, { recursive: true });
+for (const [name, path] of Object.entries(visualAssets)) {
+  await copyFile(resolve(aetherisRoot, path), resolve(assetRoot, name));
+}
+
 console.log(
-  `Synced ${snapshot.features.length} capabilities and verified ${fixturePaths.size} fixtures.`,
+  `Synced ${snapshot.languageFeatures.length} language features, ${snapshot.platformFeatures.length} platform features, ${Object.keys(fixtures).length} compile fixtures, and ${Object.keys(visualAssets).length} measured visuals.`,
 );
