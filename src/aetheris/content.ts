@@ -106,28 +106,43 @@ export const DOC_PAGES: DocPage[] = [
     "/aetheris/drawings",
     "Drawings",
     "A4 drawings are compiled views of the product",
-    "Drawing M0 projects exact BRep and existing semantic PMI into deterministic A4 pages without creating a second engineering authority.",
-    ["Drawing", "A4", "PMI", "PDF", "React", "vector"],
+    "Drawing M0B projects exact Part or occurrence-aware AssemblyIR into deterministic zoned A4 pages without creating a second engineering authority.",
+    ["Drawing", "A4", "AssemblyIR", "BOM", "HLR", "PMI", "PDF", "React", "vector"],
     [
       html(
-        `<div class="callout"><strong>The semantic 3D product remains authoritative.</strong><p>A Drawing is a disposable, reproducible printable projection. Change the model, PMI, tolerance, or standards Table and compile the Drawing again.</p></div><h2>One compile path</h2><p>A normal Firmament Template returns <code>Drawing</code>. It binds a source Product, manually selected view directions, and explicit PMI-to-view assignments. The compiler projects exact BRep edges, chooses bounded annotation candidates, flows tables to readable A4 pages, and emits DrawingIR, SVG, and vector PDF.</p>`,
+        `<div class="callout"><strong>The semantic 3D product remains authoritative.</strong><p>A Drawing is a disposable, reproducible printable projection. Change the Part, AssemblyIR, PMI, tolerance, or metadata Record and compile it again.</p></div><h2>One compile path</h2><p>A normal Firmament Template returns <code>Drawing</code>. It binds a Part or Assembly Product plus typed <code>DrawingInfo</code>. Assembly leaves are projected with their resolved world transforms and occurrence identities intact. Exact BRep edge intervals are classified by bounded face occlusion, semantic PMI is laid out, BOM is derived from AssemblyIR, and DrawingIR feeds sibling React/SVG and native vector PDF renderers.</p>`,
       ),
-      code(
-        "drawing",
-        "The canonical bearing-block Drawing Concept, Drawing Template, specialization, semantic PMI assignment, and design Table.",
-        "Product → exact BRep/PMI → Drawing Template → deterministic A4 vector PDF",
+      literal(
+        `Static MachineDrawingInfo = AsterDrawingDefaults with { Revision: 1.1.0 Date: 2026-08-10 }
+Template < Item: Product, Metadata: DrawingInfo >
+Drawing StandardAssemblyDrawing: AssemblyProductionDrawing {
+  Source: Item
+  Metadata: Metadata
+  BOM: true
+  View Front { Direction: +Z HiddenLines: VisibleAndHidden PMI: [MachineOffset] }
+  View Iso { Direction: [1,1,1] Projection: Isometric HiddenLines: VisibleOnly PMI: [] }
+}
+Drawing MachineAssemblyProduction = StandardAssemblyDrawing<Product: Machine, Metadata: MachineDrawingInfo>`,
+        "machine-assembly-drawing.firmament",
+        "The canonical Machine/BearingModule Drawing Concept, structured metadata, occurrence-aware views, semantic PMI, and AssemblyIR BOM.",
       ),
       {
         kind: "figure",
+        src: "/aetheris/assets/preview2/machine-assembly-drawing.png",
+        alt: "A4 machine assembly drawing with occurrence-aware orthographic and isometric views, semantic zones, and structured information block",
+        caption: "Page 1 of the canonical nested Machine/BearingModule output. Its AssemblyIR-derived BOM is a real table on page 2.",
+      },
+      {
+        kind: "figure",
         src: "/aetheris/assets/preview2/bearing-block-drawing.png",
-        alt: "A4 bearing block production drawing with orthographic and isometric vector views and collision-free PMI",
-        caption: "Page 1 of the canonical A4 output. The standards Table flows to page 2 instead of shrinking the drawing.",
+        alt: "Upgraded A4 bearing block part drawing with semantic PMI, perimeter zones, Inter typography, and CODEX release attribution",
+        caption: "The Part path uses the same DrawingInfo, zone, typography, information-block, and deterministic native PDF contracts; its design table remains on page 2.",
       },
       html(
-        "<h2>Bounded M0 contract</h2><ul><li>A4 portrait or landscape only;</li><li>manual orthographic/isometric views and manual PMI assignment;</li><li>deterministic exterior annotation lanes and free-leader candidates;</li><li>real React tables and document structure;</li><li>native vector PDF with physical A4 MediaBox dimensions.</li></ul><p>M0 does not yet claim exact face-occlusion hidden-line removal, Assembly/BOM drawings, sections/details, or complete ISO/ASME drafting coverage.</p>",
+        "<h2>Bounded M0B contract</h2><ul><li>A4 portrait or landscape with stable A-D / 1-6 semantic zones;</li><li>manual orthographic/isometric views and manual PMI assignment;</li><li>occurrence-aware nested AssemblyIR projection without Boolean flattening;</li><li>VisibleOnly/VisibleAndHidden interval classification with split and unsupported-support evidence;</li><li>flattened leaf-part BOM from AssemblyIR;</li><li>typed Version/Date DrawingInfo with Static/with provenance;</li><li>searchable native PDF with embedded Inter and no raster pages.</li></ul><p>The HLR oracle is deliberately bounded by admitted face tessellation; unsupported patches are explicit and conservative. Sections/details, exploded views, and complete ISO/ASME coverage remain future work.</p>",
       ),
     ],
-    "Drawing M0 · bounded",
+    "Drawing M0B · assembly and production-document closeout",
   ),
   page(
     "/aetheris/firmament/philosophy",
