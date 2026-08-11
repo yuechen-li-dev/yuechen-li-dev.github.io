@@ -65,9 +65,9 @@ export const DOC_PAGES: DocPage[] = [
         headers: ["Module", "M0 status", "Capabilities"],
         rows: [
           [
-            "Aetheris.Surfacing 0.1.0",
+            "Aetheris.Surfacing 0.2.0",
             "Bounded",
-            "RuledSurface, RuledTransition",
+            "Panel, ParametricSurface, RuledSurface, RuledTransition, SectionSurface, BoundaryPatch",
           ],
           ["Aetheris.Piping 0.1.0", "Bounded", "PathPipe, PipeRoute"],
           [
@@ -86,12 +86,19 @@ export const DOC_PAGES: DocPage[] = [
   page(
     "/aetheris/modules/surfacing",
     "Modules",
-    "Surfacing starts with mathematical constructions",
-    "RuledSurface and RuledTransition preserve high-level ruled intent through exact lowering, including a canonical hyperbolic-paraboloid proof.",
-    ["Surfacing", "RuledSurface", "RuledTransition", "saddle", "NURBS"],
+    "Mathematical surfaces become engineering Panels",
+    "Panel is the bounded, oriented engineering object above Parametric, Ruled, Section, and Boundary surface constructions, with semantic edges and developability evidence.",
+    [
+      "Surfacing",
+      "Panel",
+      "RuledSurface",
+      "BoundaryPatch",
+      "developability",
+      "NURBS",
+    ],
     [
       html(
-        "<h2>Surfacing is not synonymous with NURBS</h2><p>Aetheris authors the construction that explains the shape. M0 line-line boundaries produce an exact degree-(1,1) ruled support; compatible coaxial circles produce exact cylinders or cones. <code>RuledTransition</code> records section-transition intent without introducing a generic user-facing Loft.</p><h2>Saddle proof</h2><p>Two skew boundary lines generate the bilinear hyperbolic-paraboloid family directly. The construction retains both boundary identities and developability evidence rather than “spline pretzeling” a mathematical ruled surface.</p><h2>Refinement hierarchy</h2><p>Future local spline refinement may consume a selected ruled region while retaining its parent construction and provenance. Raw spline patches are not the default authoring representation.</p><p><strong>Current boundary:</strong> line-line and coaxial circle-circle families; no arbitrary trimming network, continuity optimizer, or spline editor.</p>",
+        '<div class="callout"><strong>Surface is construction; Panel is the object people assemble.</strong><p>A Panel owns a bounded domain, orientation/material side, ordered semantic edges, stable corners, approximation and construction provenance, and developability evidence. It is not forced to be a closed solid.</p></div><h2>Ordinary Firmament authoring</h2><p><code>Panel Name { Surface: ParametricSurface { ... } }</code> and the named, RuledSurface, RuledTransition, BoundaryPatch, and SectionSurface variants lower through the production Surfacing IR. Panel Templates specialize from Records/Tables before the bridge.</p><h2>Semantic edges and seams</h2><p>Every four-sided Panel exposes South, East, North, West and SW/SE/NE/NW with deterministic IDs. Edge Roles use the existing Interface/Mate architecture. Exact G0 residuals and free edges are reported; G1 requests are explicitly diagnosed as unsupported. Mating never implies Boolean union.</p><h2>Fabrication seam</h2><p>Ruled does not mean developable. Developable, NonDevelopable, or Indeterminate evidence survives onto the Panel together with optional thickness/material metadata, forming the future Sheet Metal lowering seam without claiming flat patterns today.</p><h2>Representation boundary</h2><p>M0 Panels are BRep-backed. The semantic contract deliberately leaves room for future SubD or SDF backing without exposing raw BRep edge IDs or introducing arbitrary trim networks.</p>',
       ),
     ],
   ),
