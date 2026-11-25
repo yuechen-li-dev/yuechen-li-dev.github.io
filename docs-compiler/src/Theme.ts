@@ -1,72 +1,267 @@
+import {
+    Border, Color, Declaration, Display, Font, FormatStyleSheet, Part,
+    Position, Rule, Section, Selector, Size, Spacing, State, Tag, Target, Track, Wrap,
+} from "./StyleSheet";
+
+record Palette {
+    ink: Color;
+    paper: Color;
+    muted: Color;
+    accent: Color;
+    line: Color;
+    linkHover: Color;
+    focus: Color;
+    header: Color;
+    headerLink: Color;
+    white: Color;
+    code: Color;
+}
+
+record CalloutStyle {
+    background: Color;
+    accent: Color;
+    inset: Spacing;
+    margin: Spacing;
+}
+
+record DocsGrid {
+    columns: Track[];
+    gap: Size;
+}
+
+record Theme {
+    palette: Palette;
+    callout: CalloutStyle;
+    maxPageWidth: Size;
+    horizontalInset: Size;
+    verticalInset: Size;
+    docsGrid: DocsGrid;
+    tabletBreakpoint: int;
+    phoneBreakpoint: int;
+}
+
+function DefaultTheme(): Theme {
+    return {
+        palette: {
+            ink: Color.Rgb(23, 38, 56),
+            paper: Color.Rgb(247, 249, 252),
+            muted: Color.Rgb(75, 93, 112),
+            accent: Color.Rgb(19, 91, 130),
+            line: Color.Rgb(214, 224, 233),
+            linkHover: Color.Rgb(11, 64, 93),
+            focus: Color.Rgb(37, 123, 172),
+            header: Color.Rgb(21, 43, 61),
+            headerLink: Color.Rgb(228, 240, 246),
+            white: Color.Rgb(255, 255, 255),
+            code: Color.Rgb(234, 240, 246),
+        },
+        callout: {
+            background: Color.Rgb(231, 242, 248),
+            accent: Color.Rgb(47, 120, 155),
+            inset: Spacing.Axes(Size.Rem(0.85), Size.Rem(1.1)),
+            margin: Spacing.Axes(Size.Rem(1.5), Size.Zero),
+        },
+        maxPageWidth: Size.Rem(76.0),
+        horizontalInset: Size.FluidRem(1.25, 5.0, 3.0),
+        verticalInset: Size.FluidRem(1.5, 6.0, 5.0),
+        docsGrid: {
+            columns: [Track.Fixed(Size.Rem(12.0)), Track.Flexible(1), Track.Fixed(Size.Rem(12.0))],
+            gap: Size.FluidRem(1.5, 4.0, 3.0),
+        },
+        tabletBreakpoint: 63,
+        phoneBreakpoint: 44,
+    };
+}
+
+function PartTarget(part: Part): Target {
+    return { path: [Selector.Class(part)], state: State.Rest };
+}
+
+function ElementTarget(tag: Tag): Target {
+    return { path: [Selector.Element(tag)], state: State.Rest };
+}
+
+function Scope(path: Selector[]): Target {
+    return { path: path, state: State.Rest };
+}
+
+function On(target: Target, declarations: Declaration[]): Rule {
+    return { targets: [target], declarations: declarations };
+}
+
+function Shared(targets: Target[], declarations: Declaration[]): Rule {
+    return { targets: targets, declarations: declarations };
+}
+
+function DocsGridRule(grid: DocsGrid): Rule {
+    return On(PartTarget(Part.DocsShell), [
+        Declaration.DisplayAs(Display.Grid), Declaration.Columns(grid.columns),
+        Declaration.Gap(grid.gap), Declaration.AlignStart,
+    ]);
+}
+
+function CalloutRule(style: CalloutStyle): Rule {
+    return On(Scope([Selector.Element(Tag.Article), Selector.Class(Part.Callout)]), [
+        Declaration.Background(style.background),
+        Declaration.BorderLeft(Border.Solid(Size.Rem(0.25), style.accent)),
+        Declaration.Padding(style.inset),
+        Declaration.Margin(style.margin),
+    ]);
+}
+
+function BaseRules(theme: Theme): Rule[] {
+    const palette: Palette = theme.palette;
+    const divider = Border.Solid(Size.Px(1.0), Color.LineToken);
+    const article = Selector.Element(Tag.Article);
+    const projects = Selector.Class(Part.ProjectGrid);
+    const shell = Selector.Class(Part.DocsShell);
+    const nav = Selector.Element(Tag.Nav);
+    const link = ElementTarget(Tag.Link);
+    const skip = PartTarget(Part.Skip);
+
+    return [
+        On(Scope([Selector.Root]), [
+            Declaration.FontFamily(Font.Interface), Declaration.ColorOf(palette.ink),
+            Declaration.Background(palette.paper), Declaration.LineHeight(1.6),
+            Declaration.Accent(palette.accent), Declaration.Line(palette.line),
+        ]),
+        On(Scope([Selector.Universal]), [Declaration.BorderBox]),
+        On(ElementTarget(Tag.Body), [Declaration.Margin(Spacing.All(Size.Zero))]),
+        On(link, [Declaration.ColorOf(Color.AccentToken), Declaration.UnderlineOffset(Size.Em(0.2))]),
+        On(link with { state: State.Hover }, [Declaration.ColorOf(palette.linkHover)]),
+        On(link with { state: State.FocusVisible }, [
+            Declaration.Outline(Border.Solid(Size.Px(2.0), palette.focus)),
+            Declaration.OutlineOffset(Size.Px(4.0)),
+        ]),
+        On(skip, [
+            Declaration.Positioned(Position.Absolute), Declaration.Top(Size.Rem(-10.0)),
+            Declaration.Left(Size.Rem(1.0)), Declaration.Layer(1),
+            Declaration.Padding(Spacing.Axes(Size.Rem(0.6), Size.Rem(1.0))),
+            Declaration.Background(palette.white),
+        ]),
+        On(skip with { state: State.Focus }, [Declaration.Top(Size.Rem(0.75))]),
+        On(PartTarget(Part.Header), [Declaration.Background(palette.header), Declaration.ColorOf(palette.white)]),
+        On(PartTarget(Part.HeaderInner), [
+            Declaration.DisplayAs(Display.Flex), Declaration.JustifyBetween, Declaration.AlignCenter,
+            Declaration.Gap(Size.Rem(1.0)), Declaration.MinHeight(Size.Rem(4.0)),
+            Declaration.MaxWidth(theme.maxPageWidth), Declaration.Margin(Spacing.All(Size.Auto)),
+            Declaration.Padding(Spacing.Axes(Size.Rem(0.75), theme.horizontalInset)),
+        ]),
+        On(Scope([Selector.Class(Part.Header), Selector.Element(Tag.Link)]), [Declaration.ColorOf(palette.headerLink)]),
+        On(Scope([Selector.Class(Part.Header), Selector.Class(Part.Brand)]), [Declaration.FontWeight(700), Declaration.DecorationNone]),
+        Shared([PartTarget(Part.Home), PartTarget(Part.DocsShell)], [
+            Declaration.MaxWidth(theme.maxPageWidth), Declaration.Margin(Spacing.All(Size.Auto)),
+            Declaration.Padding(Spacing.Axes(theme.verticalInset, theme.horizontalInset)),
+        ]),
+        On(PartTarget(Part.Home), [Declaration.MinHeight(Size.ViewHeight(65.0))]),
+        Shared([ElementTarget(Tag.Heading1), ElementTarget(Tag.Heading2), ElementTarget(Tag.Heading3)], [
+            Declaration.LineHeight(1.2), Declaration.WrapAs(Wrap.Anywhere),
+        ]),
+        On(ElementTarget(Tag.Heading1), [
+            Declaration.Margin(Spacing.Sides(Size.Zero, Size.Zero, Size.Rem(1.0), Size.Zero)),
+            Declaration.FontSize(Size.FluidRem(2.0, 5.0, 3.3)), Declaration.LetterSpacing(Size.Em(-0.035)),
+        ]),
+        On(PartTarget(Part.Intro), [
+            Declaration.MaxWidth(Size.Rem(39.0)), Declaration.FontSize(Size.Rem(1.125)), Declaration.ColorOf(palette.muted),
+        ]),
+        On(PartTarget(Part.ProjectGrid), [
+            Declaration.ListUnmarked, Declaration.Padding(Spacing.All(Size.Zero)),
+            Declaration.Margin(Spacing.Sides(Size.Rem(2.5), Size.Zero, Size.Zero, Size.Zero)),
+            Declaration.DisplayAs(Display.Grid), Declaration.Columns([Track.AutoFit(Size.Rem(17.0))]),
+            Declaration.Gap(Size.Rem(1.0)),
+        ]),
+        On(Scope([projects, Selector.Element(Tag.Item)]), [
+            Declaration.AllBorders(divider), Declaration.Background(palette.white),
+            Declaration.Padding(Spacing.All(Size.Rem(1.25))), Declaration.Radius(Size.Rem(0.35)),
+        ]),
+        On(Scope([projects, Selector.Element(Tag.Heading2)]), [
+            Declaration.Margin(Spacing.Sides(Size.Zero, Size.Zero, Size.Rem(0.6), Size.Zero)),
+            Declaration.FontSize(Size.Rem(1.25)),
+        ]),
+        On(Scope([projects, Selector.Element(Tag.Paragraph)]), [
+            Declaration.Margin(Spacing.All(Size.Zero)), Declaration.ColorOf(palette.muted),
+        ]),
+        DocsGridRule(theme.docsGrid),
+        On(Scope([shell, Selector.Element(Tag.Main)]), [Declaration.MaxWidth(Size.Rem(52.0))]),
+        On(Scope([shell, nav]), [
+            Declaration.BorderRight(divider), Declaration.PaddingRight(Size.Rem(1.25)),
+            Declaration.Positioned(Position.Sticky), Declaration.Top(Size.Rem(1.5)),
+        ]),
+        On(Scope([shell, nav, Selector.Class(Part.ProjectTitle), Selector.Element(Tag.Link)]), [
+            Declaration.ColorOf(Color.Inherit), Declaration.DecorationNone,
+        ]),
+        On(PartTarget(Part.ProjectTitle), [
+            Declaration.Margin(Spacing.Sides(Size.Zero, Size.Zero, Size.Rem(0.5), Size.Zero)), Declaration.FontWeight(700),
+        ]),
+        On(Scope([shell, nav, Selector.Element(Tag.List)]), [
+            Declaration.ListUnmarked, Declaration.Padding(Spacing.All(Size.Zero)), Declaration.Margin(Spacing.All(Size.Zero)),
+        ]),
+        On(Scope([shell, nav, Selector.Element(Tag.Item)]), [Declaration.MarginBottom(Size.Rem(0.5))]),
+        On({ path: [shell, nav, Selector.Element(Tag.Link)], state: State.CurrentPage }, [Declaration.FontWeight(650)]),
+        On(Scope([shell, Selector.Class(Part.Outline)]), [
+            Declaration.AllBorders(Border.None), Declaration.BorderLeft(divider),
+            Declaration.Padding(Spacing.Sides(Size.Zero, Size.Zero, Size.Zero, Size.Rem(1.0))),
+        ]),
+        On(Scope([Selector.Class(Part.Outline), Selector.Element(Tag.Paragraph)]), [
+            Declaration.Margin(Spacing.Sides(Size.Zero, Size.Zero, Size.Rem(0.5), Size.Zero)), Declaration.FontWeight(700),
+        ]),
+        CalloutRule(theme.callout),
+        Shared([Scope([article, Selector.Element(Tag.Heading2)]), Scope([article, Selector.Element(Tag.Heading3)])], [
+            Declaration.MarginTop(Size.Rem(2.0)), Declaration.ScrollMarginTop(Size.Rem(1.0)),
+        ]),
+        On(Scope([article, Selector.Element(Tag.Pre)]), [
+            Declaration.OverflowAuto, Declaration.Padding(Spacing.All(Size.Rem(1.0))),
+            Declaration.Background(palette.code), Declaration.Radius(Size.Rem(0.3)),
+        ]),
+        On(Scope([article, Selector.Element(Tag.Code)]), [Declaration.FontFamily(Font.Code), Declaration.WrapAs(Wrap.Anywhere)]),
+        On(Scope([article, Selector.Element(Tag.Pre), Selector.Element(Tag.Code)]), [Declaration.WrapAs(Wrap.Normal)]),
+        On(Scope([article, Selector.Element(Tag.Image)]), [Declaration.MaxWidth(Size.Percent(100.0))]),
+        On(Scope([article, Selector.Element(Tag.Table)]), [
+            Declaration.DisplayAs(Display.Block), Declaration.HorizontalOverflowAuto, Declaration.CollapseBorders,
+        ]),
+        Shared([Scope([article, Selector.Element(Tag.Th)]), Scope([article, Selector.Element(Tag.Td)])], [
+            Declaration.AllBorders(divider), Declaration.Padding(Spacing.Axes(Size.Rem(0.35), Size.Rem(0.75))),
+        ]),
+        Shared([PartTarget(Part.Provenance), PartTarget(Part.Footer)], [
+            Declaration.BorderTop(divider), Declaration.ColorOf(palette.muted),
+        ]),
+        On(PartTarget(Part.Provenance), [Declaration.MarginTop(Size.Rem(2.5)), Declaration.PaddingTop(Size.Rem(1.0))]),
+        On(PartTarget(Part.Footer), [
+            Declaration.Padding(Spacing.Axes(Size.Rem(1.25), theme.horizontalInset)),
+            Declaration.CenterText, Declaration.FontSize(Size.Rem(0.875)),
+        ]),
+    ];
+}
+
+function ResponsiveRules(theme: Theme): Section[] {
+    const shell = Selector.Class(Part.DocsShell);
+    const shellTarget = PartTarget(Part.DocsShell);
+    const outline = Scope([shell, Selector.Class(Part.Outline)]);
+    const main = Scope([shell, Selector.Element(Tag.Main)]);
+    const grid: DocsGrid = theme.docsGrid;
+    const tablet = grid with { columns: [Track.Fixed(Size.Rem(11.0)), Track.Flexible(1)] };
+    const phone = grid with { columns: [Track.Flexible(1)] };
+
+    return [
+        Section.MaxWidthRem(theme.tabletBreakpoint, [
+            On(shellTarget, [Declaration.Columns(tablet.columns)]),
+            On(outline, [Declaration.Column(2), Declaration.Row(1), Declaration.Positioned(Position.Static)]),
+            On(main, [Declaration.Column(2)]),
+        ]),
+        Section.MaxWidthRem(theme.phoneBreakpoint, [
+            On(shellTarget, [Declaration.Columns(phone.columns)]),
+            On(Scope([shell, Selector.Element(Tag.Nav)]), [
+                Declaration.Positioned(Position.Static), Declaration.BorderRight(Border.None),
+                Declaration.BorderBottom(Border.Solid(Size.Px(1.0), Color.LineToken)),
+                Declaration.PaddingBottom(Size.Rem(0.75)),
+            ]),
+            Shared([outline, main], [Declaration.Column(1), Declaration.AutoRow]),
+        ]),
+    ];
+}
+
 export function Style(): string {
-    return `:root {
-  font-family: "Segoe UI", system-ui, sans-serif;
-  color: #172638;
-  background: #f7f9fc;
-  line-height: 1.6;
-  --accent: #135b82;
-  --line: #d6e0e9;
-}
-
-* { box-sizing: border-box; }
-body { margin: 0; }
-a { color: var(--accent); text-underline-offset: .2em; }
-a:hover { color: #0b405d; }
-a:focus-visible { outline: 2px solid #257bac; outline-offset: 4px; }
-.skip { position: absolute; top: -10rem; left: 1rem; z-index: 1; padding: .6rem 1rem; background: white; }
-.skip:focus { top: .75rem; }
-.site-header { background: #152b3d; color: #fff; }
-.header-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  min-height: 4rem;
-  max-width: 76rem;
-  margin: auto;
-  padding: .75rem clamp(1.25rem, 5vw, 3rem);
-}
-.site-header a { color: #e4f0f6; }
-.site-header .brand { font-weight: 700; text-decoration: none; }
-.home, .docs-layout { max-width: 76rem; margin: auto; padding: clamp(1.5rem, 6vw, 5rem) clamp(1.25rem, 5vw, 3rem); }
-.home { min-height: 65vh; }
-h1, h2, h3 { line-height: 1.2; overflow-wrap: anywhere; }
-h1 { margin: 0 0 1rem; font-size: clamp(2rem, 5vw, 3.3rem); letter-spacing: -.035em; }
-.intro { max-width: 39rem; font-size: 1.125rem; color: #4b5d70; }
-.project-grid { list-style: none; padding: 0; margin: 2.5rem 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 1rem; }
-.project-grid li { border: 1px solid var(--line); background: white; padding: 1.25rem; border-radius: .35rem; }
-.project-grid h2 { margin: 0 0 .6rem; font-size: 1.25rem; }
-.project-grid p { margin: 0; color: #4b5d70; }
-.docs-layout { display: grid; grid-template-columns: 12rem minmax(0, 1fr) 12rem; gap: clamp(1.5rem, 4vw, 3rem); align-items: start; }
-.docs-layout main { max-width: 52rem; }
-.docs-layout nav { border-right: 1px solid var(--line); padding-right: 1.25rem; position: sticky; top: 1.5rem; }
-.docs-layout nav .project-title a { color: inherit; text-decoration: none; }
-.project-title { margin: 0 0 .5rem; font-weight: 700; }
-.docs-layout nav ul { list-style: none; padding: 0; margin: 0; }
-.docs-layout nav li { margin-bottom: .5rem; }
-.docs-layout nav a[aria-current="page"] { font-weight: 650; }
-.docs-layout .outline { border: 0; border-left: 1px solid var(--line); padding: 0 0 0 1rem; }
-.outline p { margin: 0 0 .5rem; font-weight: 700; }
-article .callout { background: #e7f2f8; border-left: .25rem solid #2f789b; padding: .85rem 1.1rem; margin: 1.5rem 0; }
-article h2, article h3 { margin-top: 2rem; scroll-margin-top: 1rem; }
-article pre { overflow: auto; padding: 1rem; background: #eaf0f6; border-radius: .3rem; }
-article code { font-family: Consolas, "Liberation Mono", monospace; overflow-wrap: anywhere; }
-article pre code { overflow-wrap: normal; }
-article img { max-width: 100%; }
-article table { display: block; overflow-x: auto; border-collapse: collapse; }
-article th, article td { border: 1px solid var(--line); padding: .35rem .75rem; }
-.provenance, .site-footer { border-top: 1px solid var(--line); color: #4b5d70; }
-.provenance { margin-top: 2.5rem; padding-top: 1rem; }
-.site-footer { padding: 1.25rem clamp(1.25rem, 5vw, 3rem); text-align: center; font-size: .875rem; }
-
-@media (max-width: 63rem) {
-  .docs-layout { grid-template-columns: 11rem minmax(0, 1fr); }
-  .docs-layout .outline { grid-column: 2; grid-row: 1; position: static; }
-  .docs-layout main { grid-column: 2; }
-}
-@media (max-width: 44rem) {
-  .docs-layout { grid-template-columns: minmax(0, 1fr); }
-  .docs-layout nav { position: static; border-right: 0; border-bottom: 1px solid var(--line); padding-bottom: .75rem; }
-  .docs-layout .outline, .docs-layout main { grid-column: 1; grid-row: auto; }
-}`;
+    const theme: Theme = DefaultTheme();
+    const responsive: Section[] = ResponsiveRules(theme);
+    return FormatStyleSheet([Section.Base(BaseRules(theme)), responsive[0], responsive[1]]);
 }

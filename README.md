@@ -44,6 +44,12 @@ emits typed document events. Node runs the compiled renderer and writes the
 files. Readers can browse the portal and native articles with JavaScript
 disabled.
 
+Change the shared palette, component styles, and breakpoints in
+[`Theme.ts`](docs-compiler/src/Theme.ts). The theme uses immutable records,
+and responsive variants use `with` to replace grid tracks. The stylesheet
+serializer turns typed selectors, declarations, and conditions into
+`/_docs/site.css` in the deployment artifact.
+
 ## Existing Aetheris manual
 
 - `manifest.tsx` is the project contract.

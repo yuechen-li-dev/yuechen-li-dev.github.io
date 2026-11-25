@@ -1,5 +1,7 @@
 export type CopelandProfile = "JavaScript";
 
+import { ClassAttribute, Part } from "./StyleSheet";
+
 export record ProjectLink {
     title: string;
     url: string;
@@ -72,12 +74,12 @@ function Layout(title: string, description: string, canonical: string, main: str
         head = head + '<link rel="canonical" href="' + Escape(canonical) + '">';
     }
     return head + '<link rel="stylesheet" href="/_docs/site.css"></head><body>' +
-        '<a class="skip" href="#content">Skip to content</a>' +
-        '<header class="site-header"><div class="header-inner">' +
-        '<a class="brand" href="/">Engineering Docs</a>' +
+        '<a' + ClassAttribute(Part.Skip) + ' href="#content">Skip to content</a>' +
+        '<header' + ClassAttribute(Part.Header) + '><div' + ClassAttribute(Part.HeaderInner) + ">" +
+        '<a' + ClassAttribute(Part.Brand) + ' href="/">Engineering Docs</a>' +
         '<a href="https://github.com/yuechen-li-dev">GitHub</a>' +
         "</div></header>" + main +
-        '<footer class="site-footer">Documentation by Yuechen Li and contributors</footer></body></html>';
+        '<footer' + ClassAttribute(Part.Footer) + '>Documentation by Yuechen Li and contributors</footer></body></html>';
 }
 
 export function RenderIndex(title: string, description: string, projects: ProjectLink[], canonical: string): string {
@@ -88,8 +90,9 @@ export function RenderIndex(title: string, description: string, projects: Projec
             Escape(project.summary) + "</p></li>";
     }
     return Layout(title, description, canonical,
-        '<main id="content" class="home"><h1>' + Escape(title) + "</h1>" +
-        '<p class="intro">' + Escape(description) + '</p><ul class="project-grid">' + cards + "</ul></main>");
+        '<main id="content"' + ClassAttribute(Part.Home) + "><h1>" + Escape(title) + "</h1>" +
+        "<p" + ClassAttribute(Part.Intro) + ">" + Escape(description) +
+        "</p><ul" + ClassAttribute(Part.ProjectGrid) + ">" + cards + "</ul></main>");
 }
 
 export function RenderPage(title: string, description: string, canonical: string,
@@ -106,10 +109,10 @@ export function RenderPage(title: string, description: string, canonical: string
     }
     let provenance = "";
     if (source != "") {
-        provenance = '<p class="provenance">' + Anchor(source, "View this revision on GitHub") + "</p>";
+        provenance = "<p" + ClassAttribute(Part.Provenance) + ">" + Anchor(source, "View this revision on GitHub") + "</p>";
     }
-    const main: string = '<div class="docs-layout"><nav aria-label="Project documentation">' +
-        '<p class="project-title">' + Anchor(project.url, project.title) + "</p><ul>" + menu + "</ul></nav>" +
+    const main: string = "<div" + ClassAttribute(Part.DocsShell) + '><nav aria-label="Project documentation">' +
+        "<p" + ClassAttribute(Part.ProjectTitle) + ">" + Anchor(project.url, project.title) + "</p><ul>" + menu + "</ul></nav>" +
         '<main id="content"><article><h1>' + Escape(title) + "</h1>" + articleHtml +
         provenance + "</article></main>" + outline + "</div>";
     return Layout(title, description, canonical, main);
@@ -117,6 +120,6 @@ export function RenderPage(title: string, description: string, canonical: string
 
 export function RenderNotFound(): string {
     return Layout("Page not found", "This documentation page could not be found.", "",
-        '<main id="content" class="home"><h1>Page not found</h1>' +
+        '<main id="content"' + ClassAttribute(Part.Home) + "><h1>Page not found</h1>" +
         '<p><a href="/">Browse project documentation</a></p></main>');
 }
