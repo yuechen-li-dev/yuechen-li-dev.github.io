@@ -4,15 +4,16 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: github-pages
+  group: github-pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -23,14 +24,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Read TSPack pin
+        id: tspack
+        run: echo "version=$(cat .tspack-version)" >> "$GITHUB_OUTPUT"
 
       - name: Setup TSPack
-        uses: yuechen-li-dev/tspack/.github/actions/setup-tspack@v0.1.8
+        uses: yuechen-li-dev/tspack/.github/actions/setup-tspack@c830bd678f3e74700f89851af4f394d5a4054012
         with:
-          version: v0.1.8
-      
+          version: ${{ steps.tspack.outputs.version }}
+
+      - name: Checkout pinned Copeland compiler
+        uses: actions/checkout@v4
+        with:
+          repository: yuechen-li-dev/Copeland
+          ref: a48991b7f8e7fd9b84a27b7a46b3bd24b2a871ad
+          path: .tspack/copeland-source
+          sparse-checkout: src/Copeland
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.404"
+
+      - name: Build Copeland CLI
+        run: dotnet build .tspack/copeland-source/src/Copeland/Copeland.Cli/Copeland.Cli.csproj -c Release -m:1 -o .tspack/copeland
+
       - name: Sync dependencies
         run: tspack sync
 
@@ -46,20 +70,31 @@ jobs:
       - name: Type-check site
         run: tspack run typecheck
 
-      - name: Build site
+      - name: Build Aetheris manual
         run: tspack run build
+
+      - name: Compile and render portal
+        run: tspack run docs-build
 
       - name: Validate documentation routes and snapshot
         run: tspack run docs-check
 
+      - name: Test portal and legacy manual
+        run: tspack run test
+
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: dist
 
   deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
 
     environment:
       name: github-pages

@@ -47,6 +47,7 @@ const deps = defineDeps({
   react: dep(npm("react", "^19.0.0")),
   reactDom: dep(npm("react-dom", "^19.0.0"), { key: "react-dom" }),
   machinaLayout: dep(npm("machinalayout", "^0.7.0"), { key: "machinalayout" }),
+  markdown: tool(npm("markdown-it", "15.0.3"), { key: "markdown-it" }),
   typescript: tool(npm("typescript", "^5.0.0")),
   vite: tool(npm("vite", "^6.4.3")),
   viteReact: tool(npm("@vitejs/plugin-react", "^4.0.0"), {
@@ -77,6 +78,7 @@ export default define(
           deps.react,
           deps.reactDom,
           deps.machinaLayout,
+          deps.markdown,
           deps.typescript,
           deps.vite,
           deps.viteReact,
@@ -97,6 +99,7 @@ export default define(
           deps.reactDomTypes,
           deps.nodeTypes,
           deps.biome,
+          deps.markdown,
         ]}
       />
       <Targets
@@ -124,7 +127,11 @@ export default define(
             name: "build",
             runtime: "node",
             command: ["vite", "build"],
-            url: "http://127.0.0.1:4173",
+          },
+          {
+            name: "docs-build",
+            runtime: "node",
+            command: ["node", "scripts/build-docs.mjs"],
           },
           {
             name: "docs-sync",
@@ -139,7 +146,12 @@ export default define(
           {
             name: "test",
             runtime: "node",
-            command: ["node", "--test", "tests/docs.test.mjs"],
+            command: [
+              "node",
+              "--test",
+              "tests/docs.test.mjs",
+              "tests/portal.test.mjs",
+            ],
           },
           {
             name: "lint",

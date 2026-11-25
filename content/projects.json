@@ -1,0 +1,47 @@
+{
+  "origin": "https://yuechen-li-dev.github.io",
+  "projects": [
+    {
+      "slug": "aetheris",
+      "title": "Aetheris",
+      "summary": "Engineering CAD, Firmament, and the Aetheris Preview 2 manual.",
+      "renderer": "legacy"
+    },
+    {
+      "slug": "copeland-ts",
+      "title": "Copeland TS",
+      "summary": "Install Copeland TS and get started with the compiler and templates.",
+      "renderer": "markdown",
+      "source": {
+        "repository": "yuechen-li-dev/Copeland",
+        "revision": "a48991b7f8e7fd9b84a27b7a46b3bd24b2a871ad"
+      },
+      "pages": [
+        {
+          "slug": "installation",
+          "title": "Installation",
+          "summary": "Build and install the local-feed preview of Copeland TS.",
+          "file": "docs/Copeland/installation.md"
+        }
+      ]
+    },
+    {
+      "slug": "oct",
+      "title": "Oct",
+      "summary": "Find the CLI commands for building, testing, and inspecting Oct programs.",
+      "renderer": "markdown",
+      "source": {
+        "repository": "yuechen-li-dev/oct",
+        "revision": "da8b97236b6eeb8bbd72c84b254e988a31eb19a6"
+      },
+      "pages": [
+        {
+          "slug": "cli",
+          "title": "CLI quick reference",
+          "summary": "Common Oct CLI commands and build-time tooling.",
+          "file": "docs/CLI.md"
+        }
+      ]
+    }
+  ]
+}
