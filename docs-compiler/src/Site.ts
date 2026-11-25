@@ -3,13 +3,21 @@ import { DocumentPart, RenderDocument } from "./Article";
 import { Installation } from "./pages/Installation";
 import { OctCli } from "./pages/OctCli";
 import { WritingDocs } from "./pages/WritingDocs";
+import { Book } from "./pages/book/Book";
+import { FirstProgram } from "./pages/book/FirstProgram";
+import { Values } from "./pages/book/Values";
+import { Records } from "./pages/book/Records";
+import { Enums } from "./pages/book/Enums";
+import { Fallibility } from "./pages/book/Fallibility";
+import { Modules } from "./pages/book/Modules";
 import { Style } from "./Theme";
 
-export enum PageId { Install, Author, Cli }
+export enum PageId { Install, Author, Cli, BookIndex, FirstProgram, Values, Records, Enums, Fallibility, Modules }
 
 export record Page {
     id: PageId;
     slug: string;
+    section: string;
     title: string;
     summary: string;
     source: string;
@@ -39,13 +47,20 @@ function Origin(): string { return "https://yuechen-li-dev.github.io"; }
 function Projects(): Project[] {
     return [
         { slug: "aetheris", title: "Aetheris", summary: "Engineering CAD, Firmament, and the Aetheris Preview 2 manual.", pages: [] },
-        { slug: "copeland-ts", title: "Copeland TS", summary: "Install the compiler and write documentation in Copeland TSX.", pages: [
-            { id: PageId.Install, slug: "installation", title: "Installation", summary: "Build and install the local-feed preview of Copeland TS.",
+        { slug: "copeland-ts", title: "Copeland TS", summary: "Learn Copeland TS and build your first program.", pages: [
+            { id: PageId.BookIndex, slug: "book", section: "", title: "The Copeland TS Book", summary: "Learn the language by building small programs.", source: "" },
+            { id: PageId.FirstProgram, slug: "first-program", section: "book", title: "Your first program", summary: "Compile a Copeland module and run it in Node.", source: "" },
+            { id: PageId.Values, slug: "values-and-functions", section: "book", title: "Values and functions", summary: "Use explicit types to define and call a rule.", source: "" },
+            { id: PageId.Records, slug: "records-and-collections", section: "book", title: "Records and collections", summary: "Model tasks, update records, and build arrays.", source: "" },
+            { id: PageId.Enums, slug: "enums-and-match", section: "book", title: "Payload enums and match", summary: "Model alternatives and handle each case.", source: "" },
+            { id: PageId.Fallibility, slug: "absence-and-failure", section: "book", title: "Absence and failure", summary: "Use Option and Result to express distinct outcomes.", source: "" },
+            { id: PageId.Modules, slug: "modules-and-testing", section: "book", title: "Modules, targets, and testing", summary: "Organize code and test the target you ship.", source: "" },
+            { id: PageId.Install, slug: "installation", section: "", title: "Installation", summary: "Build and install the local-feed preview of Copeland TS.",
                 source: "https://github.com/yuechen-li-dev/Copeland/blob/a48991b7f8e7fd9b84a27b7a46b3bd24b2a871ad/docs/Copeland/installation.md" },
-            { id: PageId.Author, slug: "writing-docs", title: "Writing docs", summary: "Author typed pages with native document components.", source: "" },
+            { id: PageId.Author, slug: "writing-docs", section: "", title: "Writing docs", summary: "Author typed pages with native document components.", source: "" },
         ] },
         { slug: "oct", title: "Oct", summary: "Find the CLI commands for building, testing, and inspecting Oct programs.", pages: [
-            { id: PageId.Cli, slug: "cli", title: "CLI quick reference", summary: "Common Oct commands and build-time tooling.",
+            { id: PageId.Cli, slug: "cli", section: "", title: "CLI quick reference", summary: "Common Oct commands and build-time tooling.",
                 source: "https://github.com/yuechen-li-dev/oct/blob/da8b97236b6eeb8bbd72c84b254e988a31eb19a6/docs/CLI.md" },
         ] },
     ];
@@ -56,7 +71,21 @@ export function Content(id: PageId): Document {
         Install => Installation(),
         Author => WritingDocs(),
         Cli => OctCli(),
+        BookIndex => Book(),
+        FirstProgram => FirstProgram(),
+        Values => Values(),
+        Records => Records(),
+        Enums => Enums(),
+        Fallibility => Fallibility(),
+        Modules => Modules(),
     };
+}
+
+function PageRoute(project: string, page: Page): string ! string {
+    if (page.section == "") { return Route(project, page.slug); }
+    const root: string = Route(project, "")?;
+    const path: string = Route(page.section, page.slug)?;
+    return ok(String.Slice(root, 0, root.length - 1) + path);
 }
 
 export function PlanPages(): PagePlan[] ! string {
@@ -64,19 +93,25 @@ export function PlanPages(): PagePlan[] ! string {
     const plans = MutableList<PagePlan>();
     for (let index: int = 0; index < projects.length; index = index + 1) {
         const project: Project = projects[index];
-        const root: string = Route(project.slug, "")!;
+        const root: string = Route(project.slug, "")?;
         const navigation = MutableList<Link>();
+        const bookNavigation = MutableList<Link>();
         for (let pageIndex: int = 0; pageIndex < project.pages.length; pageIndex = pageIndex + 1) {
             const page: Page = project.pages[pageIndex];
-            navigation.append({ title: page.title, url: Route(project.slug, page.slug)! });
+            const link: Link = { title: page.title, url: PageRoute(project.slug, page)? };
+            if (page.section == "") { navigation.append(link); }
+            if (page.slug == "book" || page.section == "book") { bookNavigation.append(link); }
         }
         const links: Link[] = navigation.freeze();
+        const chapters: Link[] = bookNavigation.freeze();
         for (let pageIndex: int = 0; pageIndex < project.pages.length; pageIndex = pageIndex + 1) {
+            const page: Page = project.pages[pageIndex];
+            const inBook: boolean = page.slug == "book" || page.section == "book";
             plans.append({
-                route: links[pageIndex].url,
+                route: PageRoute(project.slug, page)?,
                 project: { title: project.title, url: root },
-                page: project.pages[pageIndex],
-                navigation: links,
+                page: page,
+                navigation: if inBook { chapters } else { links },
             });
         }
     }
@@ -97,15 +132,17 @@ export function RenderDirectories(): StaticFile[] ! string {
     const cards = MutableList<ProjectLink>();
     for (let index: int = 0; index < projects.length; index = index + 1) {
         const project: Project = projects[index];
-        const root: string = Route(project.slug, "")!;
+        const root: string = Route(project.slug, "")?;
         cards.append({ title: project.title, url: root, summary: project.summary });
         if (project.pages.length == 0) { continue; }
         const links = MutableList<ProjectLink>();
         for (let entry: int = 0; entry < project.pages.length; entry = entry + 1) {
             const page: Page = project.pages[entry];
-            links.append({ title: page.title, url: Route(project.slug, page.slug)!, summary: page.summary });
+            if (project.slug == "copeland-ts" && page.slug != "book") { continue; }
+            links.append({ title: page.title, url: PageRoute(project.slug, page)?, summary: page.summary });
         }
-        output.append({ path: root, content: RenderIndex(project.title, project.summary, links.freeze(), Origin() + root) });
+        const summary: string = if project.slug == "copeland-ts" { "Project homepage in progress." } else { project.summary };
+        output.append({ path: root, content: RenderIndex(project.title, summary, links.freeze(), Origin() + root) });
     }
     output.append({ path: "/", content: RenderIndex("Project documentation",
         "Browse the manuals and reference guides for each engineering project.", cards.freeze(), Origin() + "/") });

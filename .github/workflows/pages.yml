@@ -76,6 +76,9 @@ jobs:
       - name: Compile and render portal
         run: tspack run docs-build
 
+      - name: Compile and run the published book examples
+        run: tspack run docs-examples
+
       - name: Validate documentation routes and snapshot
         run: tspack run docs-check
 

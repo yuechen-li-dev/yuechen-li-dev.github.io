@@ -20,33 +20,60 @@ test("typed routes reject casing, traversal, reserved characters, and duplicates
 
 test("native TSX emits typed document events and static articles", () => {
   const pages = checked(PlanPages());
-  assert.deepEqual(pages.map((page) => page.route), [
+  assert.deepEqual(pages.filter((page) => !page.route.startsWith("/copeland-ts/book/")).map((page) => page.route), [
     "/copeland-ts/installation/", "/copeland-ts/writing-docs/", "/oct/cli/",
   ]);
-  const author = pages[1];
+  const author = pages.find((plan) => plan.route === "/copeland-ts/writing-docs/");
   const events = Content(author.page.id);
   assert.ok(Object.isFrozen(events));
   assert.ok(events.some((event) => event.tag === "Open" && event.payload.node.tag === "Callout"));
-  const outputs = pages.map((plan) => checked(RenderArticle(plan, Content(plan.page.id))));
-  const html = outputs[1].content;
+  const outputs = new Map(pages.map((plan) => [plan.route, checked(RenderArticle(plan, Content(plan.page.id)))]));
+  const html = outputs.get(author.route).content;
   assert.match(html, /<strong>Copeland TSX<\/strong>/);
   assert.match(html, /aria-label="On this page"/);
   assert.match(html, /href="#write-a-page"/);
   assert.match(html, /aria-current="page" href="\/copeland-ts\/writing-docs\/"/);
   assert.match(html, /data-language="tsx">export function QuickStart/);
   assert.match(html, /&lt;Document&gt;/);
-  assert.match(outputs[0].content, /--add-source &lt;feed&gt;/);
-  assert.match(outputs[2].content, /oct &lt;command&gt;/);
+  assert.match(outputs.get("/copeland-ts/installation/").content, /--add-source &lt;feed&gt;/);
+  const oct = outputs.get("/oct/cli/").content;
+  assert.match(oct, /oct &lt;command&gt;/);
   for (const anchor of [
     "oct-atlas", "oct-make-and-makeoctest", "oct-make-reporting", "oct-artifact-build-phase",
     "oct-new-package-scaffolding", "oct-init-existing-package-manifests", "oct-json-infer",
     "oct-templates-discovery", "oct-pkg-wrapper-tooling", "optional-package-lockfiles",
     "version-surface", "package-manager--canonical-registry-quick-reference",
   ]) {
-    assert.ok(outputs[2].content.includes(`id="${anchor}"`), `Missing published Oct CLI anchor ${anchor}`);
+    assert.ok(oct.includes(`id="${anchor}"`), `Missing published Oct CLI anchor ${anchor}`);
   }
   assert.doesNotMatch(html, /<script\b/);
-  assert.deepEqual(outputs[1], checked(RenderArticle(author, events)));
+  assert.deepEqual(outputs.get(author.route), checked(RenderArticle(author, events)));
+});
+
+test("the project placeholder links to a book with ordered chapter navigation", () => {
+  const pages = checked(PlanPages());
+  const bookRoutes = [
+    "/copeland-ts/book/",
+    "/copeland-ts/book/first-program/",
+    "/copeland-ts/book/values-and-functions/",
+    "/copeland-ts/book/records-and-collections/",
+    "/copeland-ts/book/enums-and-match/",
+    "/copeland-ts/book/absence-and-failure/",
+    "/copeland-ts/book/modules-and-testing/",
+  ];
+  const chapters = pages.filter((plan) => plan.route.startsWith("/copeland-ts/book/"));
+  assert.deepEqual(chapters.map((plan) => plan.route), bookRoutes);
+  for (const chapter of chapters) {
+    assert.deepEqual(chapter.navigation.map((link) => link.url), bookRoutes);
+    const article = checked(RenderArticle(chapter, Content(chapter.page.id)));
+    assert.ok(article.content.includes(`aria-current="page" href="${chapter.route}"`));
+    assert.doesNotMatch(article.content, /<script\b/);
+  }
+
+  const front = checked(RenderDirectories()).find((file) => file.path === "/copeland-ts/");
+  assert.match(front.content, /Project homepage in progress/);
+  assert.match(front.content, /href="\/copeland-ts\/book\/">The Copeland TS Book</);
+  assert.doesNotMatch(front.content, /href="\/copeland-ts\/book\/first-program\//);
 });
 
 test("framework emits the typed theme and preserves responsive and focus rules", () => {
