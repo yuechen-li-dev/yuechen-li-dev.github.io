@@ -18,6 +18,11 @@ export function Book(): Document {
             <Item><Paragraph>[Reduce UI events](/copeland-ts/book/reduce-ui-events/) turns clicks, failures, and retries into explicit state transitions.</Paragraph></Item>
             <Item><Paragraph>[Handle out-of-order responses](/copeland-ts/book/stale-ui-responses/) keeps a slow response from replacing the article the user selected most recently.</Paragraph></Item>
         </List>
+        <Heading level="2">Concurrency</Heading>
+        <List>
+            <Item><Paragraph>[Wait for work with async and await](/copeland-ts/book/async-estimates/) loads the queue’s task estimates and handles a typed failure.</Paragraph></Item>
+            <Item><Paragraph>[Score independent items with batch](/copeland-ts/book/batch-estimates/) applies the scheduling rule to every estimate and checks the output on Node and .NET.</Paragraph></Item>
+        </List>
         <Heading level="2">Find a specific answer</Heading>
         <Paragraph>Use the [installation guide](/copeland-ts/installation/) to set up the local preview. Consult the [language overview](https://github.com/yuechen-li-dev/Copeland/blob/a48991b7f8e7fd9b84a27b7a46b3bd24b2a871ad/docs/Copeland/language/overview.md) when you need semantics or feature boundaries. [Writing docs](/copeland-ts/writing-docs/) explains how this site is built.</Paragraph>
     </Document>;
