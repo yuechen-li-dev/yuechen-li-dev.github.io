@@ -46,7 +46,7 @@ export function ValidateRoutes(routes: string[]): void ! string {
     return;
 }
 
-function Escape(value: string): string {
+export function Escape(value: string): string {
     let escaped = "";
     for (let index: int = 0; index < value.length; index = index + 1) {
         const code = String.CodeAt(value, index);
@@ -59,7 +59,7 @@ function Escape(value: string): string {
     return escaped;
 }
 
-function Anchor(url: string, title: string): string {
+export function Anchor(url: string, title: string): string {
     return '<a href="' + Escape(url) + '">' + Escape(title) + "</a>";
 }
 
@@ -93,11 +93,16 @@ export function RenderIndex(title: string, description: string, projects: Projec
 }
 
 export function RenderPage(title: string, description: string, canonical: string,
-    project: Link, navigation: Link[], articleHtml: string, source: string): string {
+    project: Link, navigation: Link[], articleHtml: string, outline: string, source: string): string {
     let menu = "";
     for (let index: int = 0; index < navigation.length; index = index + 1) {
         const link: Link = navigation[index];
-        menu = menu + "<li>" + Anchor(link.url, link.title) + "</li>";
+        if (canonical.length >= link.url.length
+            && String.Slice(canonical, canonical.length - link.url.length, canonical.length) == link.url) {
+            menu = menu + '<li><a aria-current="page" href="' + Escape(link.url) + '">' + Escape(link.title) + "</a></li>";
+        } else {
+            menu = menu + "<li>" + Anchor(link.url, link.title) + "</li>";
+        }
     }
     let provenance = "";
     if (source != "") {
@@ -106,7 +111,7 @@ export function RenderPage(title: string, description: string, canonical: string
     const main: string = '<div class="docs-layout"><nav aria-label="Project documentation">' +
         '<p class="project-title">' + Anchor(project.url, project.title) + "</p><ul>" + menu + "</ul></nav>" +
         '<main id="content"><article><h1>' + Escape(title) + "</h1>" + articleHtml +
-        provenance + "</article></main></div>";
+        provenance + "</article></main>" + outline + "</div>";
     return Layout(title, description, canonical, main);
 }
 
