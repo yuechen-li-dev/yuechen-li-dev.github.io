@@ -31,18 +31,15 @@ record Element {
 
 function HeadingId(label: string): string {
     let id = "";
-    let gap = false;
     for (let index: int = 0; index < label.length; index = index + 1) {
         let code: int = String.CodeAt(label, index);
         if (code >= 65 && code <= 90) { code = code + 32; }
         const letter: boolean = code >= 97 && code <= 122;
         const digit: boolean = code >= 48 && code <= 57;
-        if (letter || digit || code >= 128) {
-            if (gap && id != "") { id = id + "-"; }
+        if (letter || digit || code == 45 || code == 95 || code >= 128) {
             id = id + String.FromCode(code);
-            gap = false;
-        } else if (code == 32 || code == 45 || code == 9) {
-            gap = true;
+        } else if (code == 32 || code == 9) {
+            id = id + "-";
         }
     }
     if (id == "") { return "section"; }

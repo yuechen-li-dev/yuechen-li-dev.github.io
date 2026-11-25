@@ -37,6 +37,14 @@ test("native TSX emits typed document events and static articles", () => {
   assert.match(html, /&lt;Document&gt;/);
   assert.match(outputs[0].content, /--add-source &lt;feed&gt;/);
   assert.match(outputs[2].content, /oct &lt;command&gt;/);
+  for (const anchor of [
+    "oct-atlas", "oct-make-and-makeoctest", "oct-make-reporting", "oct-artifact-build-phase",
+    "oct-new-package-scaffolding", "oct-init-existing-package-manifests", "oct-json-infer",
+    "oct-templates-discovery", "oct-pkg-wrapper-tooling", "optional-package-lockfiles",
+    "version-surface", "package-manager--canonical-registry-quick-reference",
+  ]) {
+    assert.ok(outputs[2].content.includes(`id="${anchor}"`), `Missing published Oct CLI anchor ${anchor}`);
+  }
   assert.doesNotMatch(html, /<script\b/);
   assert.deepEqual(outputs[1], checked(RenderArticle(author, events)));
 });
