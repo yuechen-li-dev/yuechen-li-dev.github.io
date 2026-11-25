@@ -81,8 +81,9 @@ const setup = codeBlocks(Content(first.page.id))
 assert.deepEqual(setup.map((block) => block.language), ["xml", "tsx", "tsx"],
   "The first chapter must publish the project, workspace config, and manifest in order");
 const files = ["Book.csproj", "tsconfig.tsx", "manifest.tsx"];
+const packageRoutes = new Set(["npm-packages", "nuget-packages"]);
 const examples = chapters.flatMap((plan) =>
-  examplesIn(plan.route, codeBlocks(Content(plan.page.id))));
+  packageRoutes.has(plan.page.slug) ? [] : examplesIn(plan.route, codeBlocks(Content(plan.page.id))));
 assert.ok(examples.length > 0, "The book must publish runnable examples");
 
 const targets = [
@@ -97,11 +98,63 @@ function checkOutput(exampleRoot, runner, artifact, expected, label) {
   console.log("Verified " + label);
 }
 
+function packageRecipe(slug, languages) {
+  const chapter = chapters.find((plan) => plan.page.slug === slug);
+  assert.ok(chapter, "Missing package chapter " + slug);
+  const blocks = codeBlocks(Content(chapter.page.id)).filter((block) => languages.includes(block.language));
+  assert.deepEqual(blocks.map((block) => block.language), languages, "Unexpected recipe blocks in " + slug);
+  return blocks.map((block) => block.text);
+}
+
+async function checkPackageRecipes(scratch) {
+  const [manifest, identity, workspace, npmSource, npmOutput, emittedJs] = packageRecipe("npm-packages",
+    ["tsx", "xml", "tsx", "copeland-npm", "output", "javascript"]);
+  const npmRoot = join(scratch, "npm-package");
+  const compiler = process.platform === "win32" ? cli.replace(/\.dll$/, ".exe") : cli.replace(/\.dll$/, "");
+  const compilerPath = JSON.stringify(resolve(compiler).replaceAll("\\", "/"));
+  await mkdir(join(npmRoot, "src"), { recursive: true });
+  await writeFile(join(npmRoot, "manifest.tsx"),
+    manifest.replace('"./tools/Copeland.Cli"', compilerPath), "utf8");
+  await writeFile(join(npmRoot, "Queue.csproj"), identity, "utf8");
+  await writeFile(join(npmRoot, "tsconfig.tsx"), workspace, "utf8");
+  await writeFile(join(npmRoot, "src", "Main.ts"), npmSource, "utf8");
+  const tspack = process.env.TSPACK_BIN ?? "tspack";
+  for (const args of [["update"], ["sync"], ["build", "node"]]) {
+    execFileSync(tspack, args, { cwd: npmRoot, timeout: 90000, stdio: "inherit" });
+  }
+  checkOutput(npmRoot, process.execPath, "dist/main.js", npmOutput, "npm book recipe (Node)");
+  const generatedJs = await readFile(join(npmRoot, "dist", "src", "Main.js"), "utf8");
+  const importLine = emittedJs.split("\n")[0].trim();
+  assert.match(importLine, /^import /);
+  assert.ok(generatedJs.includes(importLine), "Expected a direct ESM import in the npm recipe");
+
+  const [project, nugetSource, host, nugetOutput, directCall] = packageRecipe("nuget-packages",
+    ["xml", "copeland-nuget", "csharp", "output", "csharp"]);
+  const nugetRoot = join(scratch, "nuget-package");
+  await mkdir(nugetRoot);
+  await writeFile(join(nugetRoot, "Queue.csproj"), project, "utf8");
+  await writeFile(join(nugetRoot, "QueueJson.ts"), nugetSource, "utf8");
+  await writeFile(join(nugetRoot, "Program.cs"), host, "utf8");
+  const dotnetOptions = {
+    cwd: nugetRoot,
+    encoding: "utf8",
+    timeout: 90000,
+    env: { ...process.env, NUGET_PACKAGES: join(scratch, "nuget-cache") },
+  };
+  execFileSync("dotnet", ["restore"], { ...dotnetOptions, stdio: "inherit" });
+  const actual = execFileSync("dotnet", ["run", "--no-restore"], dotnetOptions);
+  assert.equal(actual.replaceAll("\r\n", "\n"), nugetOutput + "\n", "NuGet book recipe (.NET)");
+  const generatedCs = await readFile(join(nugetRoot, "obj", "Debug", "net10.0", "Copeland", "QueueJson.g.cs"), "utf8");
+  assert.ok(generatedCs.includes(directCall), "Expected a direct CLR call in the NuGet recipe");
+  console.log("Verified NuGet book recipe (.NET)");
+}
+
 let copelandCount = 0;
 let typescriptCount = 0;
 let templateCount = 0;
 const scratch = await mkdtemp(join(root, ".tspack", "book-examples-"));
 try {
+  await checkPackageRecipes(scratch);
   for (const [index, example] of examples.entries()) {
     const exampleRoot = join(scratch, String(index + 1));
     const label = example.route + " example " + (index + 1);

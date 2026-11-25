@@ -58,6 +58,11 @@ Node's test runner after both targets are built.
 A `language="copeland-template"` block uses `Example` as the materializer
 entry. Follow it with `language="file:<filename>"` and the expected file
 contents. The checker runs the template materializer and compares the file.
+The npm and NuGet chapters use `language="copeland-npm"` and
+`language="copeland-nuget"` for their entry sources and publish their own
+project files. The checker restores the packages, runs the two projects, and
+checks the emitted ESM import and CLR call. Set `TSPACK_BIN` to an absolute
+path if the pinned TSPack executable is outside PATH.
 
 Change the shared palette, component styles, and breakpoints in
 [`Theme.ts`](docs-compiler/src/Theme.ts). The theme uses immutable records,

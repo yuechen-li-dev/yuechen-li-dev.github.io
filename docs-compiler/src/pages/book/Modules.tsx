@@ -85,6 +85,7 @@ node --test queue.test.mjs
         <Paragraph>You should see two passing tests. To check that the tests catch a change in behavior, change the fit comparison in `src/Tasks.ts` to strict less-than, rebuild both targets, and run the tests again. The exact-fit expectation fails on both. Restore the original comparison and rebuild both artifacts to make the tests pass again.</Paragraph>
         <Heading level="2">Where Node dependencies fit</Heading>
         <Paragraph>Use your regular Node package and test tooling with the JavaScript output. When Copeland source calls into an npm package, it crosses a declared interop contract. A call to a Node API still needs Node. Keep portable logic in ordinary Copeland modules so you can build it for .NET separately from its host-specific callers.</Paragraph>
+        <Paragraph>The [packages chapters](/copeland-ts/book/npm-packages/) show the complete npm and NuGet setup and how package calls work on each target.</Paragraph>
         <Paragraph>The [Node migration guide](https://github.com/yuechen-li-dev/Copeland/blob/a48991b7f8e7fd9b84a27b7a46b3bd24b2a871ad/docs/Copeland/authoring/incremental-migration.md) walks through moving one export in an existing TypeScript project.</Paragraph>
         <Heading level="2">Test through the target you ship</Heading>
         <Paragraph>The tests above exercise the program at its entry point. When you want to test individual functions or integrate with an existing project, use the test runner that matches the boundary.</Paragraph>

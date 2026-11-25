@@ -18,12 +18,16 @@ import { BatchEstimates } from "./pages/book/BatchEstimates";
 import { TypeRequirements } from "./pages/book/TypeRequirements";
 import { GenericsTemplates } from "./pages/book/GenericsTemplates";
 import { StaticEvaluation } from "./pages/book/StaticEvaluation";
+import { NpmPackages } from "./pages/book/NpmPackages";
+import { NugetPackages } from "./pages/book/NugetPackages";
+import { PackageTargets } from "./pages/book/PackageTargets";
 import { Style } from "./Theme";
 
 export enum PageId {
     Install, Author, Cli, BookIndex, FirstProgram, Values, Records, Enums, Fallibility, Modules,
     ScreenState, UiEvents, StaleResponses, AsyncEstimates, BatchEstimates,
     TypeRequirements, GenericsTemplates, StaticEvaluation,
+    NpmPackages, NugetPackages, PackageTargets,
 }
 
 export record Page {
@@ -75,6 +79,9 @@ function Projects(): Project[] {
             { id: PageId.TypeRequirements, slug: "types-and-interfaces", section: "book", title: "Name types and express requirements", summary: "Use aliases to name types and interfaces to constrain reusable operations.", source: "" },
             { id: PageId.GenericsTemplates, slug: "generics-and-templates", section: "book", title: "Reuse code with generics and templates", summary: "Reuse a declaration across types, specialize it with static arguments, or construct a value at build time.", source: "" },
             { id: PageId.StaticEvaluation, slug: "static-evaluation", section: "book", title: "Precompute values with static", summary: "Evaluate a known part of the program at build time and weigh the cost of embedding it.", source: "" },
+            { id: PageId.NpmPackages, slug: "npm-packages", section: "book", title: "Use npm packages", summary: "Lock a JavaScript dependency, declare a typed import, and run the emitted code on Node.", source: "" },
+            { id: PageId.NugetPackages, slug: "nuget-packages", section: "book", title: "Use NuGet packages", summary: "Restore a .NET assembly and call it directly from generated C#.", source: "" },
+            { id: PageId.PackageTargets, slug: "package-targets", section: "book", title: "Use both ecosystems in one app", summary: "Trace an npm call across the .NET-to-Node bridge and use its result with a NuGet library.", source: "" },
             { id: PageId.Install, slug: "installation", section: "", title: "Installation", summary: "Build and install the local-feed preview of Copeland TS.",
                 source: "https://github.com/yuechen-li-dev/Copeland/blob/a48991b7f8e7fd9b84a27b7a46b3bd24b2a871ad/docs/Copeland/installation.md" },
             { id: PageId.Author, slug: "writing-docs", section: "", title: "Writing docs", summary: "Author typed pages with native document components.", source: "" },
@@ -106,6 +113,9 @@ export function Content(id: PageId): Document {
         TypeRequirements => TypeRequirements(),
         GenericsTemplates => GenericsTemplates(),
         StaticEvaluation => StaticEvaluation(),
+        NpmPackages => NpmPackages(),
+        NugetPackages => NugetPackages(),
+        PackageTargets => PackageTargets(),
     };
 }
 

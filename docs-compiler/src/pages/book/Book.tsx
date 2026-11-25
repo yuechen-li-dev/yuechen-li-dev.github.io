@@ -29,7 +29,14 @@ export function Book(): Document {
             <Item><Paragraph>[Reuse code with generics and templates](/copeland-ts/book/generics-and-templates/) compares the two generic spellings, static arguments, and construction templates.</Paragraph></Item>
             <Item><Paragraph>[Precompute values with static](/copeland-ts/book/static-evaluation/) builds a lookup table at compile time and weighs the cost of embedding it.</Paragraph></Item>
         </List>
+        <Heading level="2">Packages and interoperability</Heading>
+        <List>
+            <Item><Paragraph>[Use npm packages](/copeland-ts/book/npm-packages/) declares a package export and runs it on Node through an ordinary ESM import.</Paragraph></Item>
+            <Item><Paragraph>[Use NuGet packages](/copeland-ts/book/nuget-packages/) restores a .NET library and calls it directly from Copeland TS.</Paragraph></Item>
+            <Item><Paragraph>[Use both ecosystems in one app](/copeland-ts/book/package-targets/) follows an npm call into a Node sidecar and feeds its result to a NuGet library.</Paragraph></Item>
+        </List>
         <Heading level="2">Find a specific answer</Heading>
         <Paragraph>Use the [installation guide](/copeland-ts/installation/) to set up the local preview. Consult the [language overview](https://github.com/yuechen-li-dev/Copeland/blob/a48991b7f8e7fd9b84a27b7a46b3bd24b2a871ad/docs/Copeland/language/overview.md) when you need semantics or feature boundaries. [Writing docs](/copeland-ts/writing-docs/) explains how this site is built.</Paragraph>
+        <Paragraph>The examples are checked with the [compiler and TSPack pins in the Pages build](https://github.com/yuechen-li-dev/yuechen-li-dev.github.io/blob/main/.github/workflows/pages.yml).</Paragraph>
     </Document>;
 }

@@ -59,5 +59,6 @@ Zero-minute task: 0 slots
             <Item><Paragraph>Compare the cost of computing the value with the cost of embedding it. Evaluation adds build work, and changing a fixed input requires a rebuild. A large embedded value can grow the artifact and still take time to load or allocate. For this simple queue rule, a single division per task may be cheaper than preparing any table.</Paragraph></Item>
         </List>
         <Paragraph>A generic parameter selects a type, and a static parameter fixes a value for one specialization. A `static` expression goes a step further and evaluates the selected computation during the build. Choose the form that expresses the decision your program actually needs.</Paragraph>
+        <Paragraph>Next, use an existing library from the JavaScript ecosystem in [Use npm packages](/copeland-ts/book/npm-packages/).</Paragraph>
     </Document>;
 }
