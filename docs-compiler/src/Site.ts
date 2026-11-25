@@ -13,11 +13,13 @@ import { Modules } from "./pages/book/Modules";
 import { ScreenState } from "./pages/book/ScreenState";
 import { UiEvents } from "./pages/book/UiEvents";
 import { StaleResponses } from "./pages/book/StaleResponses";
+import { AsyncEstimates } from "./pages/book/AsyncEstimates";
+import { BatchEstimates } from "./pages/book/BatchEstimates";
 import { Style } from "./Theme";
 
 export enum PageId {
     Install, Author, Cli, BookIndex, FirstProgram, Values, Records, Enums, Fallibility, Modules,
-    ScreenState, UiEvents, StaleResponses,
+    ScreenState, UiEvents, StaleResponses, AsyncEstimates, BatchEstimates,
 }
 
 export record Page {
@@ -64,6 +66,8 @@ function Projects(): Project[] {
             { id: PageId.ScreenState, slug: "model-ui-state", section: "book", title: "Model a loading screen", summary: "Turn a TypeScript kind union into a payload enum and render every case.", source: "" },
             { id: PageId.UiEvents, slug: "reduce-ui-events", section: "book", title: "Reduce UI events", summary: "Use a reducer to decide which clicks and responses change the screen.", source: "" },
             { id: PageId.StaleResponses, slug: "stale-ui-responses", section: "book", title: "Handle out-of-order responses", summary: "Track request identity so old responses cannot overwrite the current view.", source: "" },
+            { id: PageId.AsyncEstimates, slug: "async-estimates", section: "book", title: "Wait for work with async and await", summary: "Load task estimates and handle success and failure after awaiting the result.", source: "" },
+            { id: PageId.BatchEstimates, slug: "batch-estimates", section: "book", title: "Score independent items with batch", summary: "Apply the queue rule to an array and keep the results in input order.", source: "" },
             { id: PageId.Install, slug: "installation", section: "", title: "Installation", summary: "Build and install the local-feed preview of Copeland TS.",
                 source: "https://github.com/yuechen-li-dev/Copeland/blob/a48991b7f8e7fd9b84a27b7a46b3bd24b2a871ad/docs/Copeland/installation.md" },
             { id: PageId.Author, slug: "writing-docs", section: "", title: "Writing docs", summary: "Author typed pages with native document components.", source: "" },
@@ -90,6 +94,8 @@ export function Content(id: PageId): Document {
         ScreenState => ScreenState(),
         UiEvents => UiEvents(),
         StaleResponses => StaleResponses(),
+        AsyncEstimates => AsyncEstimates(),
+        BatchEstimates => BatchEstimates(),
     };
 }
 
