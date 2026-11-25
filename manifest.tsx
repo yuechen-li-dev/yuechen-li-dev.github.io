@@ -153,6 +153,7 @@ export default define(
               "--test",
               "tests/docs.test.mjs",
               "tests/portal.test.mjs",
+              "examples/article-panel/tests/panel.test.mjs",
             ],
           },
           {

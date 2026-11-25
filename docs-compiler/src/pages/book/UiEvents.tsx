@@ -97,6 +97,6 @@ Patterns in UI
         <Heading level="2">Run the reducer without a browser</Heading>
         <Paragraph>The example feeds events directly into the reducer. It builds and runs on Node and .NET with the same trace. The first line shows that an early result leaves the panel idle. The last shows that a retry delivered after success leaves the article visible. You can create either sequence without clicking a button, starting a server, or waiting for a timeout.</Paragraph>
         <Paragraph>In an application, the host starts the fetch when a request is accepted, then dispatches a received or rejected event on completion. The reducer is ordinary synchronous code. The view reads its result, and the host owns the network call. Try sending a second `Requested` event while already loading and compare the text before and after.</Paragraph>
-        <Paragraph>So far, `Loading` only says that a request is pending. What if the user can pick a different article while that request is still running? Give each load its own identity in [Handle out-of-order responses](/copeland-ts/book/stale-ui-responses/).</Paragraph>
+        <Paragraph>So far, `Loading` only says that a request is pending. Next, [wire the view to events and state](/copeland-ts/book/wire-ui-events/) to see how the browser host uses the reducer. The browser example also gives each load its own identity, a rule you can work through in [Handle out-of-order responses](/copeland-ts/book/stale-ui-responses/).</Paragraph>
     </Document>;
 }

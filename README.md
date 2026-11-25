@@ -70,6 +70,11 @@ table of contents and sidebar in that order. For a planned chapter, include
 its checkpoint and prerequisites in its TSX page and mark it as planned in
 the chapter summary.
 
+The UI chapters share the runnable [article panel](examples/article-panel).
+It builds during `tspack run docs-build` and ships under
+`/copeland-ts/book/example/`. The site's test target exercises the
+example's compiled reducer, form validation, and document exports.
+
 Change the shared palette, component styles, and breakpoints in
 [`Theme.ts`](docs-compiler/src/Theme.ts). The theme uses immutable records,
 and responsive variants use `with` to replace grid tracks. The stylesheet

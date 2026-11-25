@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Article panel · The Copeland TS Book</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main>
+    <h1>Article panel</h1>
+    <div class="article-layout">
+      <section class="surface" aria-labelledby="articles-heading">
+        <h2 id="articles-heading">Articles</h2>
+        <form id="article-search" role="search" aria-label="Articles">
+          <label for="query">Search articles</label>
+          <div class="search-controls">
+            <input id="query" name="query" type="search" aria-describedby="query-error">
+            <button type="submit">Search</button>
+          </div>
+          <p id="query-error" hidden></p>
+          <p id="search-status" role="status">2 articles</p>
+        </form>
+        <ul id="article-list">
+          <li><button type="button" data-article="patterns">Patterns in UI</button></li>
+          <li><button type="button" data-article="records">Records in practice</button></li>
+        </ul>
+        <label><input id="fail-next" type="checkbox"> Fail next load</label>
+      </section>
+      <section class="surface" aria-label="Details panel">
+        <p id="panel-status" class="visually-hidden" role="status"></p>
+        <div id="panel-view"></div>
+        <button id="retry" type="button" disabled>Retry</button>
+      </section>
+    </div>
+  </main>
+  <script type="module" src="./browser.mjs"></script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+:root {
+  color-scheme: light dark;
+  --space: 1rem;
+  --line: color-mix(in srgb, CanvasText 25%, Canvas);
+  font: 1rem / 1.5 system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: var(--space);
+}
+
+main {
+  max-width: 70rem;
+  margin-inline: auto;
+}
+
+.article-layout {
+  display: grid;
+  grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr);
+  gap: var(--space);
+  align-items: start;
+}
+
+.surface {
+  padding: var(--space);
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+.surface h2 {
+  margin-block-start: 0;
+}
+
+.search-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.search-controls input {
+  flex: 1 1 8rem;
+  min-inline-size: 0;
+}
+
+input,
+button {
+  font: inherit;
+}
+
+button,
+input:not([type="checkbox"]) {
+  padding: 0.25rem 0.5rem;
+}
+
+#article-list {
+  padding-inline-start: 1.25rem;
+}
+
+#article-list li + li {
+  margin-block-start: 0.5rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 44rem) {
+  .article-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

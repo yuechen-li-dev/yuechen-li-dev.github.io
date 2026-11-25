@@ -60,6 +60,6 @@ Could not load: estimate feed unavailable
         <Paragraph>The `pending` local gives us a name and an explicit type for the computation before we need its answer. If the call and the wait belong together, you can write `await LoadEstimates(available)?` directly. Try making that change and check that both lines stay the same.</Paragraph>
         <Heading level="2">Wait where the answer is needed</Heading>
         <Paragraph>When the computation is still pending, `await` suspends the current async function and resumes it when the result is ready. This fixture completes immediately, so the trace demonstrates the types and the error path. With an I/O-backed loader, the same sequence describes which work depends on the reply. The second call in `Main` starts after the first await finishes. The UI still owns decisions such as whether a reply belongs to the current request. [Async authoring guide](https://github.com/yuechen-li-dev/Copeland/blob/2490894430af407b9ebefcf648a12008d9c8ba16/docs/Copeland/authoring/copeland-typescript-guide.md#async).</Paragraph>
-        <Paragraph>Once the estimates arrive, each can be scored independently. Next, [score independent items with batch](/copeland-ts/book/batch-estimates/).</Paragraph>
+        <Paragraph>Waiting for a value tells you when you can use it. A screen with overlapping work also needs to know which request produced it. Next, [handle out-of-order responses](/copeland-ts/book/stale-ui-responses/).</Paragraph>
     </Document>;
 }

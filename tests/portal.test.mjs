@@ -36,7 +36,9 @@ test("native TSX emits typed document events and static articles", () => {
   assert.match(html, /aria-current="page" href="\/copeland-ts\/writing-docs\/"/);
   assert.match(html, /data-language="tsx"><span class="syntax-keyword">export<\/span>/);
   assert.match(html.replaceAll(/<\/?span[^>]*>/g, ""), /&lt;Document&gt;/);
-  assert.match(outputs.get("/copeland-ts/installation/").content, /--add-source &lt;feed&gt;/);
+  const installation = outputs.get("/copeland-ts/installation/").content;
+  assert.match(installation, /--source \.\/copeland-preview\/nuget/);
+  assert.match(installation, /copeland-ts-0\.1\.0-preview\.1\.vsix/);
   const oct = outputs.get("/oct/cli/").content;
   assert.match(oct, /oct &lt;command&gt;/);
   for (const anchor of [
@@ -99,11 +101,12 @@ test("the project placeholder links to a book with ordered chapter navigation", 
     Array.from(contents.matchAll(/href="(\/copeland-ts\/book\/[^"]+)"/g), ([, url]) => url),
     bookRoutes.slice(1),
   );
-  const planned = [
+  const handsOn = [
     "editor-setup", "first-view", "wire-ui-events", "layout-and-styling", "reusable-components",
     "forms-and-accessibility", "test-your-ui", "publish-your-ui",
   ].map(route);
-  assert.equal(Array.from(contents.matchAll(/Planned chapter\./g)).length, planned.length);
+  assert.match(indexArticle, /href="\/copeland-ts\/book\/example\/"/);
+  assert.doesNotMatch(contents, /Planned chapter\./);
   for (const chapter of chapters) {
     assert.deepEqual(chapter.navigation.map((group) => [group.title, group.links.map((link) => link.url)]),
       sections.map(([title, slugs]) => [title, slugs.map(route)]));
@@ -113,10 +116,9 @@ test("the project placeholder links to a book with ordered chapter navigation", 
     if (chapter.page.part) {
       assert.ok(content.includes(`<details open><summary>${chapter.page.part}</summary>`));
     }
-    if (planned.includes(chapter.route)) {
-      assert.match(content, /This chapter is planned\./);
-      assert.match(content, /id="what-this-chapter-will-cover"/);
-      assert.doesNotMatch(content, /<pre>/);
+    if (handsOn.includes(chapter.route)) {
+      assert.doesNotMatch(content, /This chapter is planned\./);
+      assert.match(content, /<pre><code/);
     }
   }
 

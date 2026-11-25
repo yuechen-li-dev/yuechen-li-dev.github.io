@@ -42,7 +42,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: yuechen-li-dev/Copeland
-          ref: 101b5b3826f7fbf3f2f564036756bd8991d51b3b
+          ref: e1a2773c830a1dbc2e68c7e06a7c32d13b593124
           path: .tspack/copeland-source
           sparse-checkout: src/Copeland
           persist-credentials: false

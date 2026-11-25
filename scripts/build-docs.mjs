@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -27,11 +27,19 @@ const checked = (result) => {
 };
 const files = [...checked(RenderDirectories()), ...checked(PlanPages()).map((plan) =>
   checked(RenderArticle(plan, Content(plan.page.id))))];
-checked(ValidateRoutes(files.map(({ path }) => path)));
+const exampleRoute = "/copeland-ts/book/example/";
+checked(ValidateRoutes([...files.map(({ path }) => path), exampleRoute]));
 for (const { path, content } of files) {
   const relative = path.slice(1) + (path.endsWith("/") ? "index.html" : "");
   const file = resolve(root, "dist", relative);
   await mkdir(dirname(file), { recursive: true });
   await writeFile(file, content, "utf8");
 }
+const example = resolve(root, "examples", "article-panel");
+execFileSync(process.execPath, [resolve(example, "build.mjs")], {
+  cwd: root,
+  env: { ...process.env, COPELAND_CLI: resolve(cli) },
+  stdio: "inherit",
+});
+await cp(resolve(example, "dist"), resolve(root, "dist", exampleRoute.slice(1)), { recursive: true });
 console.log("Generated " + files.length + " static files with the Copeland docs framework.");

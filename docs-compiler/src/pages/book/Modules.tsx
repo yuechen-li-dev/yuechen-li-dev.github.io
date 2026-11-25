@@ -96,6 +96,6 @@ node --test queue.test.mjs
         </List>
         <Paragraph>As the queue grows, add cases from the earlier chapters. Check promotion across the urgent threshold, an empty task list, or a rejected task name. Assert the observable outcome and its data. Those expectations can stay the same even when the test runners differ.</Paragraph>
         <Paragraph>For host contracts and compiler diagnostics, use the [authoring guide](https://github.com/yuechen-li-dev/Copeland/blob/a48991b7f8e7fd9b84a27b7a46b3bd24b2a871ad/docs/Copeland/authoring/copeland-typescript-guide.md).</Paragraph>
-        <Paragraph>Next, apply payload enums and match to a UI in [Model a loading screen](/copeland-ts/book/model-ui-state/).</Paragraph>
+        <Paragraph>Next, take the same module and build habits into the browser in [Render your first view](/copeland-ts/book/first-view/).</Paragraph>
     </Document>;
 }

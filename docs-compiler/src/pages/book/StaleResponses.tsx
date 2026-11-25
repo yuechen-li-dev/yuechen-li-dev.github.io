@@ -98,6 +98,6 @@ Could not load: Connection lost
         <Heading level="2">Carry the ID across the host boundary</Heading>
         <Paragraph>When wiring up a real fetch, the host uses the selected article key to choose what to fetch. It captures the newly assigned request ID to identify that particular attempt. The same article can be selected twice and get two different request IDs. Dispatch the captured ID when the promise settles. Reading the latest ID at completion time would label an old response with the new load’s ID and defeat the check. If a host can cancel a superseded request, cancellation saves work. Keep the ID check because a response may already be queued when cancellation happens.</Paragraph>
         <Paragraph>Try delivering request 2’s success before request 1’s. Use the same state just after request 2 starts, then feed it both events in the opposite order. Article B should remain visible in either trace. For a larger test suite, assert the state case and its data directly. The display text in this example makes the sequence easy to read, but different states can have the same copy.</Paragraph>
-        <Paragraph>Next, see how to [wait for work with async and await](/copeland-ts/book/async-estimates/) when a result depends on a load.</Paragraph>
+        <Paragraph>Each of these requests affects the same panel. Next, [score independent items with batch](/copeland-ts/book/batch-estimates/) to see how Copeland handles work with an independent result per item.</Paragraph>
     </Document>;
 }
