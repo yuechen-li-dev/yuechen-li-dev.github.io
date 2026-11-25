@@ -47,11 +47,11 @@ function Complete(panel: Panel, completed: Panel): Panel {
 }
 
 function Update(panel: Panel, event: PanelEvent): Panel {
-    return match event {
-        Requested => Request(panel),
-        Received(title) => Complete(panel, Panel.Ready(title)),
-        Rejected(message) => Complete(panel, Panel.Failed(message)),
-        Retry => RetryRequest(panel),
+    return switch event {
+        case Requested => Request(panel),
+        case Received(title) => Complete(panel, Panel.Ready(title)),
+        case Rejected(message) => Complete(panel, Panel.Failed(message)),
+        case Retry => RetryRequest(panel),
     };
 }
 
@@ -92,7 +92,7 @@ Patterns in UI
 Patterns in UI
         </CodeBlock>
         <Heading level="2">Read the two decisions separately</Heading>
-        <Paragraph>The match in `Update` asks what happened. For a rejected request, it takes the error message out of the event and proposes a failed panel. The match in `Complete` asks whether the current panel can accept that outcome. A loading panel accepts it. An idle, ready, or failed panel retains its state. A pattern like `Ready(_)` matches a ready panel without binding the title, since that branch returns the existing panel as a whole.</Paragraph>
+        <Paragraph>The switch in `Update` asks what happened. It uses the [same pattern rules as match](/copeland-ts/book/enums-and-match/#choose-match-or-switch). For a rejected request, it takes the error message out of the event and proposes a failed panel. The match in `Complete` asks whether the current panel can accept that outcome. A loading panel accepts it. An idle, ready, or failed panel retains its state. A pattern like `Ready(_)` matches a ready panel without binding the title, since that branch returns the existing panel as a whole.</Paragraph>
         <Paragraph>Each match names all the relevant cases. If you add a new event, start at `Update`. If you add a new panel state, the matches that decide what to display or which actions to accept all need a decision. In a real interface, the same panel state can also drive the disabled state of a retry button. That keeps the visual controls and the update rules tied to the same model.</Paragraph>
         <Heading level="2">Run the reducer without a browser</Heading>
         <Paragraph>The example feeds events directly into the reducer. It builds and runs on Node and .NET with the same trace. The first line shows that an early result leaves the panel idle. The last shows that a retry delivered after success leaves the article visible. You can create either sequence without clicking a button, starting a server, or waiting for a timeout.</Paragraph>
