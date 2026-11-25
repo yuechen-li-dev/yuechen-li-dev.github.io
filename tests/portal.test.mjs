@@ -76,33 +76,48 @@ test("the static highlighter preserves and escapes the original snippet", () => 
 
 test("the project placeholder links to a book with ordered chapter navigation", () => {
   const pages = checked(PlanPages());
-  const bookRoutes = [
-    "/copeland-ts/book/",
-    "/copeland-ts/book/first-program/",
-    "/copeland-ts/book/values-and-functions/",
-    "/copeland-ts/book/records-and-collections/",
-    "/copeland-ts/book/enums-and-match/",
-    "/copeland-ts/book/absence-and-failure/",
-    "/copeland-ts/book/modules-and-testing/",
-    "/copeland-ts/book/model-ui-state/",
-    "/copeland-ts/book/reduce-ui-events/",
-    "/copeland-ts/book/stale-ui-responses/",
-    "/copeland-ts/book/async-estimates/",
-    "/copeland-ts/book/batch-estimates/",
-    "/copeland-ts/book/types-and-interfaces/",
-    "/copeland-ts/book/generics-and-templates/",
-    "/copeland-ts/book/static-evaluation/",
-    "/copeland-ts/book/npm-packages/",
-    "/copeland-ts/book/nuget-packages/",
-    "/copeland-ts/book/package-targets/",
+  const base = "/copeland-ts/book/";
+  const sections = [
+    ["", [""]],
+    ["Getting started", ["editor-setup", "first-program"]],
+    ["Copeland TS basics", ["values-and-functions", "records-and-collections", "enums-and-match", "absence-and-failure", "modules-and-testing"]],
+    ["Build a UI", ["first-view", "model-ui-state", "reduce-ui-events", "wire-ui-events", "layout-and-styling", "reusable-components", "forms-and-accessibility"]],
+    ["Concurrency", ["async-estimates", "stale-ui-responses", "batch-estimates"]],
+    ["Ship the UI", ["test-your-ui", "publish-your-ui"]],
+    ["Metaprogramming", ["types-and-interfaces", "generics-and-templates", "static-evaluation"]],
+    ["Packages and interoperability", ["npm-packages", "nuget-packages", "package-targets"]],
   ];
-  const chapters = pages.filter((plan) => plan.route.startsWith("/copeland-ts/book/"));
+  const route = (slug) => slug ? base + slug + "/" : base;
+  const bookRoutes = sections.flatMap(([, slugs]) => slugs.map(route));
+  const chapters = pages.filter((plan) => plan.route.startsWith(base));
   assert.deepEqual(chapters.map((plan) => plan.route), bookRoutes);
+  const index = chapters[0];
+  const indexHtml = checked(RenderArticle(index, Content(index.page.id))).content;
+  const indexArticle = indexHtml.split("<article>")[1].split("</article>")[0];
+  const contents = indexArticle.slice(indexArticle.indexOf("<h2"));
+  assert.deepEqual(
+    Array.from(contents.matchAll(/href="(\/copeland-ts\/book\/[^"]+)"/g), ([, url]) => url),
+    bookRoutes.slice(1),
+  );
+  const planned = [
+    "editor-setup", "first-view", "wire-ui-events", "layout-and-styling", "reusable-components",
+    "forms-and-accessibility", "test-your-ui", "publish-your-ui",
+  ].map(route);
+  assert.equal(Array.from(contents.matchAll(/Planned chapter\./g)).length, planned.length);
   for (const chapter of chapters) {
-    assert.deepEqual(chapter.navigation.map((link) => link.url), bookRoutes);
-    const article = checked(RenderArticle(chapter, Content(chapter.page.id)));
-    assert.ok(article.content.includes(`aria-current="page" href="${chapter.route}"`));
-    assert.doesNotMatch(article.content, /<script\b/);
+    assert.deepEqual(chapter.navigation.map((group) => [group.title, group.links.map((link) => link.url)]),
+      sections.map(([title, slugs]) => [title, slugs.map(route)]));
+    const { content } = checked(RenderArticle(chapter, Content(chapter.page.id)));
+    assert.ok(content.includes(`aria-current="page" href="${chapter.route}"`));
+    assert.doesNotMatch(content, /<script\b/);
+    if (chapter.page.part) {
+      assert.ok(content.includes(`<details open><summary>${chapter.page.part}</summary>`));
+    }
+    if (planned.includes(chapter.route)) {
+      assert.match(content, /This chapter is planned\./);
+      assert.match(content, /id="what-this-chapter-will-cover"/);
+      assert.doesNotMatch(content, /<pre>/);
+    }
   }
 
   const front = checked(RenderDirectories()).find((file) => file.path === "/copeland-ts/");

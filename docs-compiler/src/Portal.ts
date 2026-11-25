@@ -13,6 +13,11 @@ export record Link {
     url: string;
 }
 
+export record NavigationGroup {
+    title: string;
+    links: ProjectLink[];
+}
+
 function IsSlug(value: string): boolean {
     const length: int = value.length;
     if (length == 0) { return false; }
@@ -95,24 +100,42 @@ export function RenderIndex(title: string, description: string, projects: Projec
         "</p><ul" + ClassAttribute(Part.ProjectGrid) + ">" + cards + "</ul></main>");
 }
 
-export function RenderPage(title: string, description: string, canonical: string,
-    project: Link, navigation: Link[], articleHtml: string, outline: string, source: string): string {
+function RenderNavigation(navigation: NavigationGroup[], canonical: string): string {
     let menu = "";
-    for (let index: int = 0; index < navigation.length; index = index + 1) {
-        const link: Link = navigation[index];
-        if (canonical.length >= link.url.length
-            && String.Slice(canonical, canonical.length - link.url.length, canonical.length) == link.url) {
-            menu = menu + '<li><a aria-current="page" href="' + Escape(link.url) + '">' + Escape(link.title) + "</a></li>";
+    for (let groupIndex: int = 0; groupIndex < navigation.length; groupIndex = groupIndex + 1) {
+        const group: NavigationGroup = navigation[groupIndex];
+        let items = "";
+        let current = false;
+        for (let index: int = 0; index < group.links.length; index = index + 1) {
+            const link: ProjectLink = group.links[index];
+            if (canonical.length >= link.url.length
+                && String.Slice(canonical, canonical.length - link.url.length, canonical.length) == link.url) {
+                items = items + '<li><a aria-current="page" href="' + Escape(link.url) + '">' + Escape(link.title) + "</a></li>";
+                current = true;
+            } else {
+                items = items + "<li>" + Anchor(link.url, link.title) + "</li>";
+            }
+        }
+        const list: string = "<ul>" + items + "</ul>";
+        if (group.title == "") {
+            menu = menu + list;
         } else {
-            menu = menu + "<li>" + Anchor(link.url, link.title) + "</li>";
+            const open: string = if current { " open" } else { "" };
+            menu = menu + "<details" + open + "><summary>" + Escape(group.title) + "</summary>" + list + "</details>";
         }
     }
+    return menu;
+}
+
+export function RenderPage(title: string, description: string, canonical: string,
+    project: Link, navigation: NavigationGroup[], articleHtml: string, outline: string, source: string): string {
     let provenance = "";
     if (source != "") {
         provenance = "<p" + ClassAttribute(Part.Provenance) + ">" + Anchor(source, "View this revision on GitHub") + "</p>";
     }
     const main: string = "<div" + ClassAttribute(Part.DocsShell) + '><nav aria-label="Project documentation">' +
-        "<p" + ClassAttribute(Part.ProjectTitle) + ">" + Anchor(project.url, project.title) + "</p><ul>" + menu + "</ul></nav>" +
+        "<p" + ClassAttribute(Part.ProjectTitle) + ">" + Anchor(project.url, project.title) + "</p>" +
+        RenderNavigation(navigation, canonical) + "</nav>" +
         '<main id="content"><article><h1>' + Escape(title) + "</h1>" + articleHtml +
         provenance + "</article></main>" + outline + "</div>";
     return Layout(title, description, canonical, main);

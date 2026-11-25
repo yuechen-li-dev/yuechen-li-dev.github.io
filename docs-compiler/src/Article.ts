@@ -1,4 +1,4 @@
-import { Anchor, Escape, Link, RenderPage } from "./Portal";
+import { Anchor, Escape, Link, NavigationGroup, ProjectLink, RenderPage } from "./Portal";
 import { HighlightCode } from "./Highlight";
 import { ClassAttribute, Part } from "./StyleSheet";
 
@@ -23,6 +23,38 @@ export enum DocumentPart {
     Open(node: DocumentNode, role: string),
     Close(node: DocumentNode),
     Run(text: string),
+}
+
+export function AppendChapterContents(introduction: DocumentPart[], navigation: NavigationGroup[]): DocumentPart[] {
+    const parts = MutableList<DocumentPart>();
+    for (let index: int = 0; index < introduction.length - 1; index = index + 1) {
+        parts.append(introduction[index]);
+    }
+    for (let groupIndex: int = 0; groupIndex < navigation.length; groupIndex = groupIndex + 1) {
+        const group: NavigationGroup = navigation[groupIndex];
+        if (group.title == "") { continue; }
+        const heading: DocumentNode = DocumentNode.Heading("2");
+        const list: DocumentNode = DocumentNode.List("Unordered");
+        parts.append(DocumentPart.Open(heading, ""));
+        parts.append(DocumentPart.Run(group.title));
+        parts.append(DocumentPart.Close(heading));
+        parts.append(DocumentPart.Open(list, ""));
+        for (let index: int = 0; index < group.links.length; index = index + 1) {
+            const chapter: ProjectLink = group.links[index];
+            const link: DocumentNode = DocumentNode.Link(chapter.url);
+            parts.append(DocumentPart.Open(DocumentNode.Item, ""));
+            parts.append(DocumentPart.Open(DocumentNode.Paragraph, ""));
+            parts.append(DocumentPart.Open(link, ""));
+            parts.append(DocumentPart.Run(chapter.title));
+            parts.append(DocumentPart.Close(link));
+            parts.append(DocumentPart.Run(" — " + chapter.summary));
+            parts.append(DocumentPart.Close(DocumentNode.Paragraph));
+            parts.append(DocumentPart.Close(DocumentNode.Item));
+        }
+        parts.append(DocumentPart.Close(list));
+    }
+    parts.append(DocumentPart.Close(DocumentNode.Document));
+    return parts.freeze();
 }
 
 record Element {
@@ -158,7 +190,7 @@ function ReadCodeBlock(parts: DocumentPart[], start: int): CodeContent ! string 
 }
 
 export function RenderDocument(title: string, description: string, canonical: string,
-    project: Link, navigation: Link[], parts: DocumentPart[], source: string): string ! string {
+    project: Link, navigation: NavigationGroup[], parts: DocumentPart[], source: string): string ! string {
     let html = "";
     let headings = "";
     const anchors = MutableList<string>();

@@ -64,6 +64,12 @@ project files. The checker restores the packages, runs the two projects, and
 checks the emitted ESM import and CLR call. Set `TSPACK_BIN` to an absolute
 path if the pinned TSPack executable is outside PATH.
 
+In the site registry, set a chapter's `part` to its book section title and
+keep entries for the same part together. The registry supplies the book's
+table of contents and sidebar in that order. For a planned chapter, include
+its checkpoint and prerequisites in its TSX page and mark it as planned in
+the chapter summary.
+
 Change the shared palette, component styles, and breakpoints in
 [`Theme.ts`](docs-compiler/src/Theme.ts). The theme uses immutable records,
 and responsive variants use `with` to replace grid tracks. The stylesheet
