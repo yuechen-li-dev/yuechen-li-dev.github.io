@@ -134,8 +134,9 @@ function WordPart(source: string, start: int, end: int, copeland: boolean): Opti
 
 export function HighlightCode(source: string, language: string): string {
     const copeland: boolean = language == "copeland" || language == "copeland-template" || language == "tsx"
+        || language == "copeland-npm" || language == "copeland-nuget" || language == "copeland-fragment"
         || String.IndexOf(language, "copeland:") == 0;
-    if (!(copeland || language == "typescript" || language == "ts")) { return Escape(source); }
+    if (!(copeland || language == "typescript" || language == "ts" || language == "javascript")) { return Escape(source); }
 
     let html = "";
     let written = 0;
