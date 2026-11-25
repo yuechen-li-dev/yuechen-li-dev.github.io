@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-const { Route, ValidateRoutes } = await import("../docs-compiler/dist/src/Portal.node.js");
+const { Escape, Route, ValidateRoutes } = await import("../docs-compiler/dist/src/Portal.node.js");
+const { HighlightCode } = await import("../docs-compiler/dist/src/Highlight.node.js");
 const { Content, PlanPages, RenderArticle, RenderDirectories } = await import("../docs-compiler/dist/src/Site.node.js");
 
 function checked(result) {
@@ -33,8 +34,8 @@ test("native TSX emits typed document events and static articles", () => {
   assert.match(html, /aria-label="On this page"/);
   assert.match(html, /href="#write-a-page"/);
   assert.match(html, /aria-current="page" href="\/copeland-ts\/writing-docs\/"/);
-  assert.match(html, /data-language="tsx">export function QuickStart/);
-  assert.match(html, /&lt;Document&gt;/);
+  assert.match(html, /data-language="tsx"><span class="syntax-keyword">export<\/span>/);
+  assert.match(html.replaceAll(/<\/?span[^>]*>/g, ""), /&lt;Document&gt;/);
   assert.match(outputs.get("/copeland-ts/installation/").content, /--add-source &lt;feed&gt;/);
   const oct = outputs.get("/oct/cli/").content;
   assert.match(oct, /oct &lt;command&gt;/);
@@ -48,6 +49,29 @@ test("native TSX emits typed document events and static articles", () => {
   }
   assert.doesNotMatch(html, /<script\b/);
   assert.deepEqual(outputs.get(author.route), checked(RenderArticle(author, events)));
+});
+
+test("the static highlighter preserves and escapes the original snippet", () => {
+  const source = [
+    "/* multi-line comment",
+    "   with <script> & literal markup */",
+    String.raw`const url: string = "https://example.test/\"q\""; // URL comment`,
+    'const number = 0x2f + 1e-3 + .5;',
+    'const label = `fixture ${number}`;',
+    "const result = match ready { Ready => true, };",
+    "",
+  ].join("\n");
+  const html = HighlightCode(source, "copeland:Tasks.ts");
+  assert.equal(html.replaceAll(/<\/?span[^>]*>/g, ""), Escape(source));
+  assert.match(html, /class="syntax-comment">\/\* multi-line comment\n   with &lt;script&gt; &amp; literal markup \*\/<\/span>/);
+  assert.ok(html.includes(String.raw`<span class="syntax-string">&quot;https://example.test/\&quot;q\&quot;&quot;</span>`));
+  assert.match(html, /class="syntax-comment">\/\/ URL comment<\/span>/);
+  assert.match(html, /class="syntax-type">string<\/span>/);
+  assert.match(html, /class="syntax-literal">0x2f<\/span> \+ <span class="syntax-literal">1e-3<\/span> \+ <span class="syntax-literal">\.5<\/span>/);
+  assert.match(html, /class="syntax-keyword">match<\/span>/);
+  assert.doesNotMatch(html, /<script>/);
+  assert.doesNotMatch(HighlightCode(source, "typescript"), /class="syntax-keyword">match<\/span>/);
+  assert.equal(HighlightCode(source, "output"), Escape(source));
 });
 
 test("the project placeholder links to a book with ordered chapter navigation", () => {
@@ -88,6 +112,13 @@ test("framework emits the typed theme and preserves responsive and focus rules",
   assert.match(css, /^:root \{\n/);
   assert.doesNotMatch(css, /\\n/);
   assert.match(css, /a:focus-visible \{\s*outline: 2px solid rgb\(37, 123, 172\)/);
+  assert.match(css, /color-scheme: light dark;/);
+  assert.match(css, /\.syntax-keyword \{\s*color: rgb\(111, 43, 147\)/);
+  const dark = css.split("@media (prefers-color-scheme: dark) {")[1];
+  assert.ok(dark);
+  assert.match(dark, /:root \{\s*color: rgb\(221, 231, 243\);\s*background: rgb\(16, 23, 33\);/);
+  assert.match(dark, /article pre \{\s*background: rgb\(24, 33, 47\);/);
+  assert.match(dark, /\.syntax-keyword \{\s*color: rgb\(221, 172, 255\)/);
   assert.match(css, /\.skip:focus \{\s*top: 0\.75rem;/);
   assert.match(css, /\.docs-layout nav a\[aria-current="page"\] \{\s*font-weight: 650;/);
   assert.match(css, /\.docs-layout \{\s*display: grid;\s*grid-template-columns: 12rem minmax\(0, 1fr\) 12rem;/);

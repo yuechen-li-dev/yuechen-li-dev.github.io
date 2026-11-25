@@ -1,4 +1,5 @@
 import { Anchor, Escape, Link, RenderPage } from "./Portal";
+import { HighlightCode } from "./Highlight";
 import { ClassAttribute, Part } from "./StyleSheet";
 
 export enum DocumentNode {
@@ -28,6 +29,12 @@ record Element {
     opening: string;
     closing: string;
     heading: string;
+    codeLanguage?: string;
+}
+
+record CodeContent {
+    text: string;
+    closingIndex: int;
 }
 
 function HeadingId(label: string): string {
@@ -99,7 +106,12 @@ function Markup(node: DocumentNode): Element ! string {
         Strong => ok(Pair("strong")),
         Emphasis => ok(Pair("em")),
         InlineCode => ok(Pair("code")),
-        CodeBlock(language) => ok({ opening: '<pre><code data-language="' + Escape(language) + '">', closing: "</code></pre>", heading: "" }),
+        CodeBlock(language) => ok({
+            opening: '<pre><code data-language="' + Escape(language) + '">',
+            closing: "</code></pre>",
+            heading: "",
+            codeLanguage: language,
+        }),
         Item => ok(Pair("li")),
         Quote => ok(Pair("blockquote")),
         Callout => ok({ opening: "<aside" + ClassAttribute(Part.Callout) + ">", closing: "</aside>", heading: "" }),
@@ -126,6 +138,25 @@ function HeadingLabel(parts: DocumentPart[], start: int): string ! string {
     return err("A heading has no closing event.");
 }
 
+function ReadCodeBlock(parts: DocumentPart[], start: int): CodeContent ! string {
+    let text = "";
+    for (let index: int = start; index < parts.length; index = index + 1) {
+        const part: DocumentPart = parts[index];
+        match part {
+            case Run(run) => { text = text + run; }
+            case Open(node, role) => { return err("A code block contains a nested document node."); }
+            case Close(node) => {
+                const element: Element = Markup(node)?;
+                match element.codeLanguage {
+                    case Some(language) => { return ok({ text: text, closingIndex: index }); }
+                    case None => { return err("A code block ended with a different document node."); }
+                }
+            }
+        }
+    }
+    return err("A code block has no closing event.");
+}
+
 export function RenderDocument(title: string, description: string, canonical: string,
     project: Link, navigation: Link[], parts: DocumentPart[], source: string): string ! string {
     let html = "";
@@ -142,6 +173,15 @@ export function RenderDocument(title: string, description: string, canonical: st
             }
             case Open(node, role) => {
                 const element: Element = Markup(node)?;
+                match element.codeLanguage {
+                    case Some(language) => {
+                        const code: CodeContent = ReadCodeBlock(parts, index + 1)?;
+                        html = html + element.opening + HighlightCode(code.text, language) + element.closing;
+                        index = code.closingIndex;
+                        continue;
+                    }
+                    case None => {}
+                }
                 if (element.heading == "") {
                     html = html + element.opening;
                 } else {

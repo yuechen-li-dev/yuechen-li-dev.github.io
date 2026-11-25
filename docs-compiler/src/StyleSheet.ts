@@ -43,6 +43,7 @@ export enum Declaration {
     FontFamily(font: Font),
     ColorOf(color: Color),
     Background(color: Color),
+    SiteColorSchemes,
     Accent(color: Color),
     Line(color: Color),
     LineHeight(value: float),
@@ -99,6 +100,7 @@ export enum Tag {
 export enum Part {
     Skip, Header, HeaderInner, Brand, Home, Intro, ProjectGrid,
     DocsShell, ProjectTitle, Outline, Callout, Provenance, Footer,
+    SyntaxKeyword, SyntaxType, SyntaxFunction, SyntaxString, SyntaxLiteral, SyntaxComment,
 }
 
 export enum Selector {
@@ -121,6 +123,7 @@ export record Rule {
 export enum Section {
     Base(rules: Rule[]),
     MaxWidthRem(width: int, rules: Rule[]),
+    DarkPreference(rules: Rule[]),
 }
 
 function FormatSize(size: Size): string {
@@ -183,6 +186,7 @@ function FormatDeclaration(value: Declaration): string {
         }),
         ColorOf(color) => "color: " + FormatColor(color),
         Background(color) => "background: " + FormatColor(color),
+        SiteColorSchemes => "color-scheme: light dark",
         Accent(color) => "--accent: " + FormatColor(color),
         Line(color) => "--line: " + FormatColor(color),
         LineHeight(ratio) => `line-height: ${ratio}`,
@@ -247,6 +251,8 @@ function ClassName(part: Part): string {
         Home => "home", Intro => "intro", ProjectGrid => "project-grid", DocsShell => "docs-layout",
         ProjectTitle => "project-title", Outline => "outline", Callout => "callout",
         Provenance => "provenance", Footer => "site-footer",
+        SyntaxKeyword => "syntax-keyword", SyntaxType => "syntax-type", SyntaxFunction => "syntax-function",
+        SyntaxString => "syntax-string", SyntaxLiteral => "syntax-literal", SyntaxComment => "syntax-comment",
     };
 }
 
@@ -301,6 +307,8 @@ export function FormatStyleSheet(sections: Section[]): string {
         const css: string = match section {
             Base(rules) => FormatRules(rules, ""),
             MaxWidthRem(width, rules) => `@media (max-width: ${width}rem) {` + newline
+                + FormatRules(rules, "  ") + newline + "}",
+            DarkPreference(rules) => "@media (prefers-color-scheme: dark) {" + newline
                 + FormatRules(rules, "  ") + newline + "}",
         };
         output.append(css);

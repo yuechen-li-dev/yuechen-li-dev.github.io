@@ -11,6 +11,7 @@ export function QuickStart(): Document {
     </Document>;
 }
         </CodeBlock>
+        <Paragraph>Use `language="typescript"`, `language="copeland"`, or `language="tsx"` on a code block to enable highlighting. Named Copeland blocks such as `copeland:Tasks.ts` also highlight. Command and output blocks use plain text.</Paragraph>
         <Heading level="2">Register and preview</Heading>
         <List>
             <Item><Paragraph>Add the function to the typed site registry with its title, route, and description.</Paragraph></Item>
