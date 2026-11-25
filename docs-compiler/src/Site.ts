@@ -10,9 +10,15 @@ import { Records } from "./pages/book/Records";
 import { Enums } from "./pages/book/Enums";
 import { Fallibility } from "./pages/book/Fallibility";
 import { Modules } from "./pages/book/Modules";
+import { ScreenState } from "./pages/book/ScreenState";
+import { UiEvents } from "./pages/book/UiEvents";
+import { StaleResponses } from "./pages/book/StaleResponses";
 import { Style } from "./Theme";
 
-export enum PageId { Install, Author, Cli, BookIndex, FirstProgram, Values, Records, Enums, Fallibility, Modules }
+export enum PageId {
+    Install, Author, Cli, BookIndex, FirstProgram, Values, Records, Enums, Fallibility, Modules,
+    ScreenState, UiEvents, StaleResponses,
+}
 
 export record Page {
     id: PageId;
@@ -55,6 +61,9 @@ function Projects(): Project[] {
             { id: PageId.Enums, slug: "enums-and-match", section: "book", title: "Payload enums and match", summary: "Model alternatives and handle each case.", source: "" },
             { id: PageId.Fallibility, slug: "absence-and-failure", section: "book", title: "Absence and failure", summary: "Use Option and Result to express distinct outcomes.", source: "" },
             { id: PageId.Modules, slug: "modules-and-testing", section: "book", title: "Modules, targets, and testing", summary: "Organize code and test the target you ship.", source: "" },
+            { id: PageId.ScreenState, slug: "model-ui-state", section: "book", title: "Model a loading screen", summary: "Turn a TypeScript kind union into a payload enum and render every case.", source: "" },
+            { id: PageId.UiEvents, slug: "reduce-ui-events", section: "book", title: "Reduce UI events", summary: "Use a reducer to decide which clicks and responses change the screen.", source: "" },
+            { id: PageId.StaleResponses, slug: "stale-ui-responses", section: "book", title: "Handle out-of-order responses", summary: "Track request identity so old responses cannot overwrite the current view.", source: "" },
             { id: PageId.Install, slug: "installation", section: "", title: "Installation", summary: "Build and install the local-feed preview of Copeland TS.",
                 source: "https://github.com/yuechen-li-dev/Copeland/blob/a48991b7f8e7fd9b84a27b7a46b3bd24b2a871ad/docs/Copeland/installation.md" },
             { id: PageId.Author, slug: "writing-docs", section: "", title: "Writing docs", summary: "Author typed pages with native document components.", source: "" },
@@ -78,6 +87,9 @@ export function Content(id: PageId): Document {
         Enums => Enums(),
         Fallibility => Fallibility(),
         Modules => Modules(),
+        ScreenState => ScreenState(),
+        UiEvents => UiEvents(),
+        StaleResponses => StaleResponses(),
     };
 }
 

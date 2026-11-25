@@ -45,6 +45,7 @@ dotnet dist/clr/app.dll
         </List>
         <Heading level="2">Then exercise the queue</Heading>
         <Paragraph>Good first tests cover promotion across the urgent threshold, an empty task list, and a rejected task name. Assert which result you got and what it carries. Those observations express the same contract in each runner.</Paragraph>
-        <Paragraph>For host contracts and compiler diagnostics, use the [authoring guide](https://github.com/yuechen-li-dev/Copeland/blob/a48991b7f8e7fd9b84a27b7a46b3bd24b2a871ad/docs/Copeland/authoring/copeland-typescript-guide.md). Return to [the book](/copeland-ts/book/) to revisit a chapter.</Paragraph>
+        <Paragraph>For host contracts and compiler diagnostics, use the [authoring guide](https://github.com/yuechen-li-dev/Copeland/blob/a48991b7f8e7fd9b84a27b7a46b3bd24b2a871ad/docs/Copeland/authoring/copeland-typescript-guide.md).</Paragraph>
+        <Paragraph>Next, apply payload enums and match to a UI in [Model a loading screen](/copeland-ts/book/model-ui-state/).</Paragraph>
     </Document>;
 }

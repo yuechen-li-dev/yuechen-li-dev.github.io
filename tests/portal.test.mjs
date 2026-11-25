@@ -60,6 +60,9 @@ test("the project placeholder links to a book with ordered chapter navigation", 
     "/copeland-ts/book/enums-and-match/",
     "/copeland-ts/book/absence-and-failure/",
     "/copeland-ts/book/modules-and-testing/",
+    "/copeland-ts/book/model-ui-state/",
+    "/copeland-ts/book/reduce-ui-events/",
+    "/copeland-ts/book/stale-ui-responses/",
   ];
   const chapters = pages.filter((plan) => plan.route.startsWith("/copeland-ts/book/"));
   assert.deepEqual(chapters.map((plan) => plan.route), bookRoutes);
