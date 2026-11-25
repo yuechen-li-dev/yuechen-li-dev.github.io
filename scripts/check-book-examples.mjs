@@ -33,7 +33,7 @@ function examplesIn(route, blocks) {
   let entry;
 
   for (const block of blocks) {
-    if (block.language === "copeland" || block.language === "typescript") {
+    if (block.language === "copeland" || block.language === "typescript" || block.language === "copeland-template") {
       assert.equal(entry, undefined, route + " has an example without expected output");
       entry = block;
     } else if (block.language.startsWith("copeland:")) {
@@ -42,12 +42,18 @@ function examplesIn(route, blocks) {
       assert.ok(file.toLowerCase() !== "hello.ts" && !companions.has(file.toLowerCase()),
         route + " repeats a companion filename");
       companions.set(file.toLowerCase(), { file, source: block.text });
-    } else if (block.language === "output") {
+    } else if (block.language === "output" || block.language.startsWith("file:")) {
       assert.notEqual(entry, undefined, route + " has output without an example");
-      if (entry.language === "typescript") {
-        assert.equal(companions.size, 0, route + " has Copeland companions in a TypeScript example");
+      const artifact = block.language.startsWith("file:") ? block.language.slice("file:".length) : undefined;
+      assert.equal(entry.language === "copeland-template", artifact !== undefined,
+        route + " must use file output for a construction template");
+      if (artifact !== undefined) {
+        assert.match(artifact, /^[A-Za-z][A-Za-z0-9_.-]*$/, route + " has an invalid generated filename");
       }
-      examples.push({ route, entry, companions: [...companions.values()], expected: block.text });
+      if (entry.language !== "copeland") {
+        assert.equal(companions.size, 0, route + " has companions without a Copeland program");
+      }
+      examples.push({ route, entry, companions: [...companions.values()], expected: block.text, artifact });
       companions.clear();
       entry = undefined;
     } else if (block.language === "node-test") {
@@ -93,11 +99,23 @@ function checkOutput(exampleRoot, runner, artifact, expected, label) {
 
 let copelandCount = 0;
 let typescriptCount = 0;
+let templateCount = 0;
 const scratch = await mkdtemp(join(root, ".tspack", "book-examples-"));
 try {
   for (const [index, example] of examples.entries()) {
     const exampleRoot = join(scratch, String(index + 1));
     const label = example.route + " example " + (index + 1);
+    if (example.artifact !== undefined) {
+      await mkdir(exampleRoot);
+      await writeFile(join(exampleRoot, "Presets.ts"), example.entry.text, "utf8");
+      execFileSync("dotnet", [cli, "template", "materialize", "Presets.ts", "--entry", "Example", "--output", "preset-preview"],
+        { cwd: exampleRoot, stdio: "inherit", timeout: 90000 });
+      const actual = await readFile(join(exampleRoot, "preset-preview", example.artifact), "utf8");
+      assert.equal(actual, example.expected.replaceAll("\r\n", "\n"), label);
+      console.log("Verified " + label + " (template artifact)");
+      templateCount += 1;
+      continue;
+    }
     await mkdir(join(exampleRoot, "src"), { recursive: true });
     await writeFile(join(exampleRoot, "src", "Hello.ts"), example.entry.text, "utf8");
     if (example.entry.language === "typescript") {
@@ -140,4 +158,4 @@ try {
   await rm(scratch, { recursive: true, force: true });
 }
 console.log("Verified published examples on Node and .NET (Copeland: " + copelandCount
-  + ") and on Node (TypeScript: " + typescriptCount + ").");
+  + ") and on Node (TypeScript: " + typescriptCount + "); materialized templates: " + templateCount + ".");

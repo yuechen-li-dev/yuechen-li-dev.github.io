@@ -23,6 +23,12 @@ export function Book(): Document {
             <Item><Paragraph>[Wait for work with async and await](/copeland-ts/book/async-estimates/) loads the queue’s task estimates and handles a typed failure.</Paragraph></Item>
             <Item><Paragraph>[Score independent items with batch](/copeland-ts/book/batch-estimates/) applies the scheduling rule to every estimate and checks the output on Node and .NET.</Paragraph></Item>
         </List>
+        <Heading level="2">Metaprogramming</Heading>
+        <List>
+            <Item><Paragraph>[Name types and express requirements](/copeland-ts/book/types-and-interfaces/) uses aliases to name existing types and interfaces to describe what a function needs.</Paragraph></Item>
+            <Item><Paragraph>[Reuse code with generics and templates](/copeland-ts/book/generics-and-templates/) compares the two generic spellings, static arguments, and construction templates.</Paragraph></Item>
+            <Item><Paragraph>[Precompute values with static](/copeland-ts/book/static-evaluation/) builds a lookup table at compile time and weighs the cost of embedding it.</Paragraph></Item>
+        </List>
         <Heading level="2">Find a specific answer</Heading>
         <Paragraph>Use the [installation guide](/copeland-ts/installation/) to set up the local preview. Consult the [language overview](https://github.com/yuechen-li-dev/Copeland/blob/a48991b7f8e7fd9b84a27b7a46b3bd24b2a871ad/docs/Copeland/language/overview.md) when you need semantics or feature boundaries. [Writing docs](/copeland-ts/writing-docs/) explains how this site is built.</Paragraph>
     </Document>;

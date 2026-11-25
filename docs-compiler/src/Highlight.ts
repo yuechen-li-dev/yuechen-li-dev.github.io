@@ -133,7 +133,7 @@ function WordPart(source: string, start: int, end: int, copeland: boolean): Opti
 }
 
 export function HighlightCode(source: string, language: string): string {
-    const copeland: boolean = language == "copeland" || language == "tsx"
+    const copeland: boolean = language == "copeland" || language == "copeland-template" || language == "tsx"
         || String.IndexOf(language, "copeland:") == 0;
     if (!(copeland || language == "typescript" || language == "ts")) { return Escape(source); }
 

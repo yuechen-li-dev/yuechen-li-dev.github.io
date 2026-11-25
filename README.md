@@ -55,6 +55,9 @@ Use `language="typescript"` and `language="output"` for a runnable TypeScript
 comparison. The same check compiles it with TypeScript and runs it on Node.
 A `language="node-test"` block after a Copeland example's output runs with
 Node's test runner after both targets are built.
+A `language="copeland-template"` block uses `Example` as the materializer
+entry. Follow it with `language="file:<filename>"` and the expected file
+contents. The checker runs the template materializer and compares the file.
 
 Change the shared palette, component styles, and breakpoints in
 [`Theme.ts`](docs-compiler/src/Theme.ts). The theme uses immutable records,
