@@ -11,6 +11,13 @@ export function Book(): Document {
             <Item><Paragraph>[Absence and failure](/copeland-ts/book/absence-and-failure/) distinguishes a missing task from an operation that failed.</Paragraph></Item>
             <Item><Paragraph>[Modules, targets, and testing](/copeland-ts/book/modules-and-testing/) splits the queue into modules and runs the same source on Node and .NET.</Paragraph></Item>
         </List>
+        <Heading level="2">Model UI state</Heading>
+        <Paragraph>Build an article panel that can load, fail, and recover. Each chapter adds a decision that comes up in real interfaces.</Paragraph>
+        <List>
+            <Item><Paragraph>[Model a loading screen](/copeland-ts/book/model-ui-state/) starts with a TypeScript kind union and shows how Rust-style payload enums and match express the same model in Copeland.</Paragraph></Item>
+            <Item><Paragraph>[Reduce UI events](/copeland-ts/book/reduce-ui-events/) turns clicks, failures, and retries into explicit state transitions.</Paragraph></Item>
+            <Item><Paragraph>[Handle out-of-order responses](/copeland-ts/book/stale-ui-responses/) keeps a slow response from replacing the article the user selected most recently.</Paragraph></Item>
+        </List>
         <Heading level="2">Find a specific answer</Heading>
         <Paragraph>Use the [installation guide](/copeland-ts/installation/) to set up the local preview. Consult the [language overview](https://github.com/yuechen-li-dev/Copeland/blob/a48991b7f8e7fd9b84a27b7a46b3bd24b2a871ad/docs/Copeland/language/overview.md) when you need semantics or feature boundaries. [Writing docs](/copeland-ts/writing-docs/) explains how this site is built.</Paragraph>
     </Document>;

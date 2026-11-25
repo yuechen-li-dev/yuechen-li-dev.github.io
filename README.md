@@ -51,6 +51,8 @@ output with `language="output"`. Use a named block such as
 `language="copeland:Tasks.ts"` for a companion source. The Pages build
 compiles these blocks alongside the exact project files shown in **Your first
 program**, runs each example on Node and .NET, and compares the output.
+Use `language="typescript"` and `language="output"` for a runnable TypeScript
+comparison. The same check compiles it with TypeScript and runs it on Node.
 
 Change the shared palette, component styles, and breakpoints in
 [`Theme.ts`](docs-compiler/src/Theme.ts). The theme uses immutable records,
