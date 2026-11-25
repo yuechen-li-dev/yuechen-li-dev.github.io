@@ -1,6 +1,6 @@
 export function FirstProgram(): Document {
     return <Document>
-        <Paragraph>Compile a greeting to JavaScript and run it with Node. Install the Copeland CLI from the [local preview feed](/copeland-ts/installation/) and have Node on your PATH.</Paragraph>
+        <Paragraph>Start with a familiar TypeScript-shaped function. Copeland checks that its return value matches its declared type, then emits JavaScript you can run with Node. Install the Copeland CLI from the [local preview feed](/copeland-ts/installation/) and have Node on your PATH.</Paragraph>
         <Heading level="2">Write the source</Heading>
         <Paragraph>In an empty directory, save this as `src/Hello.ts`. The exported Main function is the entry point. Its return annotation tells the compiler that the program produces text.</Paragraph>
         <CodeBlock language="copeland">
@@ -24,25 +24,22 @@ export default defineTypeScriptWorkspace({
         include: ["src/**"],
         targets: {
             node: { backend: "javascript", runtime: "node" },
+            clr: { backend: "csharp", runtime: "ryujit", targetFramework: "net10.0" },
         },
     },
 });
         </CodeBlock>
-        <Paragraph>Save this as `manifest.tsx`. It names the entry file and tells the build where to write the Node launcher.</Paragraph>
+        <Paragraph>Save this as `manifest.tsx`. Both targets use the same entry file. Each target has its own output path. Start with Node and use the CLR target in the last basics chapter.</Paragraph>
         <CodeBlock language="tsx">
 import { define } from "tspack/manifest";
 
 export default define(
     <Workspace name="book" runtime="nodejs">
         <Package name="book" version="1.0.0" kind="app">
-            <Targets rows={[{
-                name: "node",
-                export: ".",
-                entry: "src/Hello.ts",
-                runtime: "dist/main.js",
-                deps: [],
-                peers: [],
-            }]} />
+            <Targets rows={[
+                { name: "node", export: ".", entry: "src/Hello.ts", runtime: "dist/main.js", deps: [], peers: [] },
+                { name: "clr", export: "./clr", entry: "src/Hello.ts", runtime: "dist/clr/app.dll", deps: [], peers: [] },
+            ]} />
         </Package>
     </Workspace>,
 );

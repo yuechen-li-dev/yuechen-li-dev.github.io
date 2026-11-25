@@ -27,7 +27,16 @@ export function Main(): string {
 Ship the docs has priority 5
         </CodeBlock>
         <Paragraph>Run the same build and Node commands. Then remove the export from Promote and build again. A named import requires a public declaration in the module on the other side.</Paragraph>
-        <Paragraph>Keep backend-specific work at explicit boundaries. The first program uses the JavaScript backend and Node. The Copeland SDK can also compile source for a .NET project. Operations using host APIs need the corresponding target and contract.</Paragraph>
+        <Heading level="2">Switch the build target</Heading>
+        <Paragraph>The workspace from chapter one already declares both targets. Change the build selector from `node` to `clr`, then run the .NET artifact with dotnet.</Paragraph>
+        <CodeBlock language="console">
+tscl build --standalone . --target clr --result obj/build.json
+dotnet dist/clr/app.dll
+        </CodeBlock>
+        <Paragraph>Both runs print the same task title and priority. The task model and its operations compile for both targets as written. The runtime choice gives you another way to run and benchmark that code. Measure the work you care about on the targets you plan to ship.</Paragraph>
+        <Heading level="2">Where Node dependencies fit</Heading>
+        <Paragraph>Use your regular Node package and test tooling with the JavaScript output. When Copeland source calls into an npm package, it crosses a declared interop contract. A call to a Node API still needs Node. Keep portable logic in ordinary Copeland modules so you can build it for .NET separately from its host-specific callers.</Paragraph>
+        <Paragraph>The [Node migration guide](https://github.com/yuechen-li-dev/Copeland/blob/a48991b7f8e7fd9b84a27b7a46b3bd24b2a871ad/docs/Copeland/authoring/incremental-migration.md) walks through moving one export in an existing TypeScript project.</Paragraph>
         <Heading level="2">Test through the target you ship</Heading>
         <List>
             <Item><Paragraph>For Node, build the project first. Use your JavaScript test runner against the emitted modules. A build with `--node-interop` adds a Node facade for supported typed boundaries such as record arguments.</Paragraph></Item>
