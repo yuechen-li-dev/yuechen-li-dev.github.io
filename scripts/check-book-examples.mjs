@@ -50,6 +50,13 @@ function examplesIn(route, blocks) {
       examples.push({ route, entry, companions: [...companions.values()], expected: block.text });
       companions.clear();
       entry = undefined;
+    } else if (block.language === "node-test") {
+      assert.equal(entry, undefined, route + " must put the test after the expected output");
+      assert.equal(companions.size, 0, route + " must put the test before the next companion source");
+      const example = examples.at(-1);
+      assert.equal(example?.entry.language, "copeland", route + " has a test without a Copeland example");
+      assert.equal(example.test, undefined, route + " repeats the test for a Copeland example");
+      example.test = block.text;
     }
   }
 
@@ -119,6 +126,13 @@ try {
         throw new Error(targetLabel + " did not compile\n" + diagnostics, { cause: error });
       }
       checkOutput(exampleRoot, target.runner, target.artifact, example.expected, targetLabel);
+    }
+    if (example.test !== undefined) {
+      const testFile = "example.test.mjs";
+      await writeFile(join(exampleRoot, testFile), example.test, "utf8");
+      execFileSync(process.execPath, ["--test", testFile],
+        { cwd: exampleRoot, stdio: "inherit", timeout: 45000 });
+      console.log("Verified the published test for " + label);
     }
     copelandCount += 1;
   }

@@ -5,11 +5,11 @@ export function Book(): Document {
         <Heading level="2">Copeland TS basics</Heading>
         <List>
             <Item><Paragraph>[Your first program](/copeland-ts/book/first-program/) builds a Copeland source file and runs the emitted JavaScript in Node.</Paragraph></Item>
-            <Item><Paragraph>[Values and functions](/copeland-ts/book/values-and-functions/) covers numeric types, function boundaries, and branching.</Paragraph></Item>
+            <Item><Paragraph>[Values and functions](/copeland-ts/book/values-and-functions/) compares TypeScript and Copeland while deciding which tasks fit in the time left today.</Paragraph></Item>
             <Item><Paragraph>[Records and collections](/copeland-ts/book/records-and-collections/) compares TypeScript objects with immutable Copeland records and uses `with` to keep both versions of a task.</Paragraph></Item>
             <Item><Paragraph>[Payload enums and match](/copeland-ts/book/enums-and-match/) gives each task state its own data and shows how match and switch handle every case.</Paragraph></Item>
             <Item><Paragraph>[Absence and failure](/copeland-ts/book/absence-and-failure/) goes from TypeScript’s missing values and exceptions to Option, typed Results, and error propagation.</Paragraph></Item>
-            <Item><Paragraph>[Modules, targets, and testing](/copeland-ts/book/modules-and-testing/) splits the queue into modules and runs the same source on Node and .NET.</Paragraph></Item>
+            <Item><Paragraph>[Modules, targets, and testing](/copeland-ts/book/modules-and-testing/) puts the scheduling rule in its own module and tests both the Node and .NET builds.</Paragraph></Item>
         </List>
         <Heading level="2">Model UI state</Heading>
         <Paragraph>Build an article panel that can load, fail, and recover. Each chapter adds a decision that comes up in real interfaces.</Paragraph>
