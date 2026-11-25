@@ -68,12 +68,14 @@ const examples = chapters.flatMap((plan) =>
   examplesIn(plan.route, codeBlocks(Content(plan.page.id))));
 assert.ok(examples.length > 0, "The book must publish runnable examples");
 
+const targets = [
+  { name: "node", runner: process.execPath, artifact: "dist/main.js" },
+  { name: "clr", runner: "dotnet", artifact: "dist/clr/app.dll" },
+];
 const scratch = await mkdtemp(join(root, ".tspack", "book-examples-"));
 try {
   for (const [index, example] of examples.entries()) {
-    const label = example.route + " example " + (index + 1);
     const exampleRoot = join(scratch, String(index + 1));
-    const result = join(exampleRoot, "obj", "build.json");
     await mkdir(join(exampleRoot, "src"), { recursive: true });
     for (const [fileIndex, file] of files.entries()) {
       await writeFile(join(exampleRoot, file), setup[fileIndex].text, "utf8");
@@ -82,20 +84,24 @@ try {
       await writeFile(join(exampleRoot, "src", companion.file), companion.source, "utf8");
     }
     await writeFile(join(exampleRoot, "src", "Hello.ts"), example.source, "utf8");
-    try {
-      execFileSync("dotnet", [cli, "build", "--standalone", ".", "--target", "node", "--result", result],
-        { cwd: exampleRoot, timeout: 60000 });
-    } catch (error) {
-      const diagnostics = await readFile(result, "utf8").catch(() => error.message);
-      throw new Error(label + " did not compile\n" + diagnostics, { cause: error });
+    for (const target of targets) {
+      const label = example.route + " example " + (index + 1) + " (" + target.name + ")";
+      const result = join(exampleRoot, "obj", target.name + ".json");
+      try {
+        execFileSync("dotnet", [cli, "build", "--standalone", ".", "--target", target.name, "--result", result],
+          { cwd: exampleRoot, timeout: 90000 });
+      } catch (error) {
+        const diagnostics = await readFile(result, "utf8").catch(() => error.message);
+        throw new Error(label + " did not compile\n" + diagnostics, { cause: error });
+      }
+      const actual = execFileSync(target.runner, [target.artifact],
+        { cwd: exampleRoot, encoding: "utf8", timeout: 10000 });
+      const expected = example.expected.replaceAll("\r\n", "\n") + "\n";
+      assert.equal(actual.replaceAll("\r\n", "\n"), expected, label);
+      console.log("Verified " + label);
     }
-    const actual = execFileSync(process.execPath, ["dist/main.js"],
-      { cwd: exampleRoot, encoding: "utf8", timeout: 10000 });
-    const expected = example.expected.replaceAll("\r\n", "\n") + "\n";
-    assert.equal(actual.replaceAll("\r\n", "\n"), expected, label);
-    console.log("Verified " + label);
   }
 } finally {
   await rm(scratch, { recursive: true, force: true });
 }
-console.log("Verified " + examples.length + " published Copeland examples.");
+console.log("Verified " + examples.length + " published Copeland examples on Node and .NET.");
