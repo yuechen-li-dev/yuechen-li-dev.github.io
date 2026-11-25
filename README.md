@@ -19,6 +19,7 @@ location is `.tspack/copeland/Copeland.Cli.dll`.
 tspack sync
 tspack run build
 tspack run docs-build
+tspack run docs-examples
 tspack run docs-check
 tspack check
 tspack audit
@@ -43,6 +44,13 @@ and the shared theme. The Copeland compiler checks the TSX structure and
 emits typed document events. Node runs the compiled renderer and writes the
 files. Readers can browse the portal and native articles with JavaScript
 disabled.
+
+The Copeland TS book lives under `docs-compiler/src/pages/book`. Mark a
+complete entry program with `language="copeland"` and its expected standard
+output with `language="output"`. Use a named block such as
+`language="copeland:Tasks.ts"` for a companion source. The Pages build
+compiles these blocks alongside the exact project files shown in **Your first
+program**, runs each example in Node, and compares the output.
 
 Change the shared palette, component styles, and breakpoints in
 [`Theme.ts`](docs-compiler/src/Theme.ts). The theme uses immutable records,

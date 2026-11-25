@@ -131,6 +131,11 @@ export default define(
             command: ["node", "scripts/build-docs.mjs"],
           },
           {
+            name: "docs-examples",
+            runtime: "node",
+            command: ["node", "scripts/check-book-examples.mjs"],
+          },
+          {
             name: "docs-sync",
             runtime: "node",
             command: ["node", "scripts/sync-aetheris-docs.mjs"],
