@@ -49,8 +49,18 @@ test("native TSX emits typed document events and static articles", () => {
   assert.deepEqual(outputs[1], checked(RenderArticle(author, events)));
 });
 
-test("framework emits a reusable theme and retains the legacy Aetheris entry", () => {
+test("framework emits the typed theme and preserves responsive and focus rules", () => {
   const files = checked(RenderDirectories());
   assert.match(files.find((file) => file.path === "/").content, /href="\/aetheris\/"/);
-  assert.match(files.find((file) => file.path === "/_docs/site.css").content, /\.docs-layout/);
+  const css = files.find((file) => file.path === "/_docs/site.css").content;
+  assert.match(css, /^:root \{\n/);
+  assert.doesNotMatch(css, /\\n/);
+  assert.match(css, /a:focus-visible \{\s*outline: 2px solid rgb\(37, 123, 172\)/);
+  assert.match(css, /\.skip:focus \{\s*top: 0\.75rem;/);
+  assert.match(css, /\.docs-layout nav a\[aria-current="page"\] \{\s*font-weight: 650;/);
+  assert.match(css, /\.docs-layout \{\s*display: grid;\s*grid-template-columns: 12rem minmax\(0, 1fr\) 12rem;/);
+  assert.match(css, /@media \(max-width: 63rem\) \{\s*\.docs-layout \{\s*grid-template-columns: 11rem minmax\(0, 1fr\);/);
+  assert.match(css, /@media \(max-width: 44rem\) \{\s*\.docs-layout \{\s*grid-template-columns: minmax\(0, 1fr\);/);
+  assert.ok(css.indexOf("63rem)") < css.indexOf("44rem)"));
+  assert.equal(checked(RenderDirectories()).find((file) => file.path === "/_docs/site.css").content, css);
 });

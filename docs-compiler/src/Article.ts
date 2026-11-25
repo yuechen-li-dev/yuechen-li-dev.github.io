@@ -1,4 +1,5 @@
 import { Anchor, Escape, Link, RenderPage } from "./Portal";
+import { ClassAttribute, Part } from "./StyleSheet";
 
 export enum DocumentNode {
     Document,
@@ -101,7 +102,7 @@ function Markup(node: DocumentNode): Element ! string {
         CodeBlock(language) => ok({ opening: '<pre><code data-language="' + Escape(language) + '">', closing: "</code></pre>", heading: "" }),
         Item => ok(Pair("li")),
         Quote => ok(Pair("blockquote")),
-        Callout => ok({ opening: '<aside class="callout">', closing: "</aside>", heading: "" }),
+        Callout => ok({ opening: "<aside" + ClassAttribute(Part.Callout) + ">", closing: "</aside>", heading: "" }),
         Link(target) => LinkElement(target),
         List(kind) => ok(ListElement(kind)),
         Break => ok({ opening: "<hr>", closing: "", heading: "" }),
@@ -164,7 +165,7 @@ export function RenderDocument(title: string, description: string, canonical: st
     }
     let outline = "";
     if (headings != "") {
-        outline = '<nav class="outline" aria-label="On this page"><p>On this page</p><ul>' + headings + "</ul></nav>";
+        outline = "<nav" + ClassAttribute(Part.Outline) + ' aria-label="On this page"><p>On this page</p><ul>' + headings + "</ul></nav>";
     }
     return ok(RenderPage(title, description, canonical, project, navigation, html, outline, source));
 }
