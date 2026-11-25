@@ -5,6 +5,7 @@ export default defineTypeScriptWorkspace({
   tscl: {
     project: "./Docs.csproj",
     include: ["src/**"],
+    types: ["TextDocuments"],
     targets: { node: { backend: "javascript", runtime: "node" } },
   },
 });

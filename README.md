@@ -29,17 +29,20 @@ tspack run preview
 
 ## Publish a document
 
-Add a collection or page to [the project registry](content/projects.json).
-A Markdown collection names a GitHub repository and a full commit SHA. Its
-pages specify source files and stable slugs. Route slugs use lowercase letters,
-digits, and single hyphens. The generator maps the page to
-`/<project>/<page>/index.html` in the deployment artifact. Relative Markdown
-links resolve to published pages when available and to the pinned GitHub source
-otherwise. Raw HTML in the Markdown is escaped.
+Create a `.tsx` file in [the pages directory](docs-compiler/src/pages) and
+export a function returning a native `<Document>`. Use components such as
+`<Heading>`, `<Paragraph>`, `<List>`, and `<CodeBlock>` for structure.
+Prose supports Markdown-style bold, emphasis, inline code, and links.
+Use root-relative paths for links between published pages.
 
-The Copeland compiler handles routes, duplicate detection, and HTML layouts.
-The Node adapter fetches the pinned Markdown, parses it, and writes the files.
-The resulting portal and pilot articles can be read with JavaScript disabled.
+Add a page ID, content function, and route metadata to the
+[typed site registry](docs-compiler/src/Site.ts). Route slugs use lowercase
+letters, digits, and single hyphens. The build writes a static page to
+`/<project>/<page>/index.html`, with project navigation, a heading outline,
+and the shared theme. The Copeland compiler checks the TSX structure and
+emits typed document events. Node runs the compiled renderer and writes the
+files. Readers can browse the portal and native articles with JavaScript
+disabled.
 
 ## Existing Aetheris manual
 

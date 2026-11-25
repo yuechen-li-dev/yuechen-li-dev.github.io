@@ -67,15 +67,17 @@ if (process.argv.includes("--dist")) {
     await access(resolve(root, "dist", route.replace(/^\//, ""), "index.html"));
   if ((await readdir(resolve(root, "dist/assets"))).length === 0)
     throw new Error("Production build has no assets.");
-  const registry = JSON.parse(await readFile(resolve(root, "content/projects.json"), "utf8"));
-  const portalRoutes = ["/", "/404.html"];
-  for (const project of registry.projects) {
-    if (project.renderer === "legacy") continue;
-    portalRoutes.push("/" + project.slug + "/");
-    for (const page of project.pages) {
-      portalRoutes.push("/" + project.slug + "/" + page.slug + "/");
-    }
+  const { PlanPages, RenderDirectories } = await import("../docs-compiler/dist/src/Site.node.js");
+  const directories = RenderDirectories();
+  const plans = PlanPages();
+  if (directories.tag !== "ok" || plans.tag !== "ok") {
+    throw new Error("Could not read the compiled site routes.");
   }
+  const origin = "https://yuechen-li-dev.github.io";
+  const portalRoutes = [
+    ...directories.value.map((file) => file.path).filter((path) => !path.endsWith(".css")),
+    ...plans.value.map((plan) => plan.route),
+  ];
   const htmlFor = async (path) => readFile(resolve(root, "dist", path.slice(1)
     + (path.endsWith("/") ? "index.html" : "")), "utf8");
   for (const route of portalRoutes) {
@@ -83,12 +85,12 @@ if (process.argv.includes("--dist")) {
     if (!/<main\b/.test(html) || !/<h1\b/.test(html) || /<script\b/i.test(html)) {
       throw new Error("Portal route should contain a readable static page: " + route);
     }
-    if (route !== "/404.html" && !html.includes('rel="canonical" href="' + registry.origin + route + '"')) {
+    if (route !== "/404.html" && !html.includes('rel="canonical" href="' + origin + route + '"')) {
       throw new Error("Portal route has a missing or incorrect canonical URL: " + route);
     }
     for (const [, href] of html.matchAll(/\b(?:href|src)="([^"]+)"/g)) {
-      const url = new URL(href, registry.origin + route);
-      if (url.origin !== registry.origin) continue;
+      const url = new URL(href, origin + route);
+      if (url.origin !== origin) continue;
       const path = decodeURIComponent(url.pathname);
       const destination = resolve(root, "dist", path.slice(1) + (path.endsWith("/") ? "index.html" : ""));
       await access(destination).catch(() => {

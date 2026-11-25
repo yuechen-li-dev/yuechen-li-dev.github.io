@@ -1,50 +1,48 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { renderMarkdown, renderPortal } from "../scripts/portal.mjs";
 
-const registry = JSON.parse(await readFile(new URL("../content/projects.json", import.meta.url), "utf8"));
-const engine = await import("../docs-compiler/dist/src/Portal.node.js");
+const { Route, ValidateRoutes } = await import("../docs-compiler/dist/src/Portal.node.js");
+const { Content, PlanPages, RenderArticle, RenderDirectories } = await import("../docs-compiler/dist/src/Site.node.js");
+
+function checked(result) {
+  assert.equal(result.tag, "ok", result.error);
+  return result.value;
+}
 
 test("typed routes reject casing, traversal, reserved characters, and duplicates", () => {
-  assert.deepEqual(engine.Route("copeland-ts", "installation"), {
-    tag: "ok", value: "/copeland-ts/installation/",
-  });
+  assert.equal(checked(Route("copeland-ts", "installation")), "/copeland-ts/installation/");
   for (const invalid of ["Aetheris", "../safe", "ffi/abc", "x%2Fy", "x--y", "oct-"]) {
-    assert.equal(engine.Route(invalid, "").tag, "err");
-    assert.equal(engine.Route("oct", invalid).tag, "err");
+    assert.equal(Route(invalid, "").tag, "err");
+    assert.equal(Route("oct", invalid).tag, "err");
   }
-  assert.equal(engine.ValidateRoutes(["/oct/", "/oct/"]).tag, "err");
+  assert.equal(ValidateRoutes(["/oct/", "/oct/"]).tag, "err");
 });
 
-test("Markdown preserves headings, filters HTML and resolves published source links", () => {
-  const source = registry.projects[1].source;
-  const path = registry.projects[1].pages[0].file;
-  const published = new Map([[source.repository + "@" + source.revision + ":" + path, "/copeland-ts/installation/"]]);
-  const html = renderMarkdown(
-    "# Install\n\n## Commands\n\n[Jump](installation.md#commands)\n\n## Commands\n\n<script>alert(1)</script>\n",
-    source, path, published,
-  );
-  assert.match(html, /id="commands"/);
-  assert.match(html, /id="commands-1"/);
-  assert.match(html, /href="\/copeland-ts\/installation\/#commands"/);
-  assert.doesNotMatch(html, /<(?:h1|script)\b/);
-});
-
-test("project registration drives deterministic pages with provenance", async () => {
-  const load = async () => "# Original title\n\n## Usage\n\nSample instructions.";
-  const pages = await renderPortal(engine, registry, load);
-  assert.deepEqual(pages, await renderPortal(engine, registry, load));
-  assert.deepEqual([...pages.keys()], [
-    "/", "/404.html", "/copeland-ts/", "/copeland-ts/installation/", "/oct/", "/oct/cli/",
+test("native TSX emits typed document events and static articles", () => {
+  const pages = checked(PlanPages());
+  assert.deepEqual(pages.map((page) => page.route), [
+    "/copeland-ts/installation/", "/copeland-ts/writing-docs/", "/oct/cli/",
   ]);
-  assert.match(pages.get("/"), /href="\/aetheris\/"/);
-  const oct = pages.get("/oct/cli/");
-  assert.match(oct, /<h1>CLI quick reference<\/h1>/);
-  assert.match(oct, /Sample instructions/);
-  assert.match(oct, /github\.com\/yuechen-li-dev\/oct\/blob\/da8b97236b6eeb8bbd72c84b254e988a31eb19a6\/docs\/CLI\.md/);
-  assert.doesNotMatch(oct, /<script\b/);
-  await assert.rejects(renderPortal(engine, {
-    ...registry, projects: [...registry.projects, registry.projects[1]],
-  }, load), /Duplicate page route/);
+  const author = pages[1];
+  const events = Content(author.page.id);
+  assert.ok(Object.isFrozen(events));
+  assert.ok(events.some((event) => event.tag === "Open" && event.payload.node.tag === "Callout"));
+  const outputs = pages.map((plan) => checked(RenderArticle(plan, Content(plan.page.id))));
+  const html = outputs[1].content;
+  assert.match(html, /<strong>Copeland TSX<\/strong>/);
+  assert.match(html, /aria-label="On this page"/);
+  assert.match(html, /href="#write-a-page"/);
+  assert.match(html, /aria-current="page" href="\/copeland-ts\/writing-docs\/"/);
+  assert.match(html, /data-language="tsx">export function QuickStart/);
+  assert.match(html, /&lt;Document&gt;/);
+  assert.match(outputs[0].content, /--add-source &lt;feed&gt;/);
+  assert.match(outputs[2].content, /oct &lt;command&gt;/);
+  assert.doesNotMatch(html, /<script\b/);
+  assert.deepEqual(outputs[1], checked(RenderArticle(author, events)));
+});
+
+test("framework emits a reusable theme and retains the legacy Aetheris entry", () => {
+  const files = checked(RenderDirectories());
+  assert.match(files.find((file) => file.path === "/").content, /href="\/aetheris\/"/);
+  assert.match(files.find((file) => file.path === "/_docs/site.css").content, /\.docs-layout/);
 });
