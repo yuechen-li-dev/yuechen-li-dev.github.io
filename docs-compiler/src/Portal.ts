@@ -93,7 +93,7 @@ export function RenderIndex(title: string, description: string, projects: Projec
 }
 
 export function RenderPage(title: string, description: string, canonical: string,
-    project: string, navigation: Link[], articleHtml: string, source: string): string {
+    project: Link, navigation: Link[], articleHtml: string, source: string): string {
     let menu = "";
     for (let index: int = 0; index < navigation.length; index = index + 1) {
         const link: Link = navigation[index];
@@ -104,7 +104,7 @@ export function RenderPage(title: string, description: string, canonical: string
         provenance = '<p class="provenance">' + Anchor(source, "View this revision on GitHub") + "</p>";
     }
     const main: string = '<div class="docs-layout"><nav aria-label="Project documentation">' +
-        '<p class="project-title">' + Escape(project) + "</p><ul>" + menu + "</ul></nav>" +
+        '<p class="project-title">' + Anchor(project.url, project.title) + "</p><ul>" + menu + "</ul></nav>" +
         '<main id="content"><article><h1>' + Escape(title) + "</h1>" + articleHtml +
         provenance + "</article></main></div>";
     return Layout(title, description, canonical, main);

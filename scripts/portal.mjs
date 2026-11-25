@@ -116,8 +116,8 @@ export async function renderPortal(engine, registry, load = readMarkdown) {
       const markdown = await load(project.source, page.file);
       const article = renderMarkdown(markdown, project.source, page.file, published);
       output.set(page.route, engine.RenderPage(page.title, page.summary,
-        origin.origin + page.route, project.title,
-        [{ title: project.title, url: project.route }, ...navigation], article,
+        origin.origin + page.route, { title: project.title, url: project.route },
+        navigation, article,
         sourceUrl("github", project.source, page.file)));
     }
   }
