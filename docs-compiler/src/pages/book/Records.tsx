@@ -126,6 +126,6 @@ First snapshot: Write tests
 Second snapshot: Write tests, Publish guide
         </CodeBlock>
         <Paragraph>Use an array literal when you already have the elements, a mutable list when you discover them incrementally, and a `MutableArray` when you know the buffer length and need indexed writes. In the queue, the caller sees only the frozen array. Keeping the builder local makes it clear where mutation happens and gives every caller an array it can keep. [Copeland runtime arrays reference](https://github.com/yuechen-li-dev/Copeland/blob/2490894430af407b9ebefcf648a12008d9c8ba16/docs/Copeland/language/copeland-ts-runtime-arrays.md).</Paragraph>
-        <Paragraph>Next, add a task lifecycle with [payload enums and match](/copeland-ts/book/enums-and-match/).</Paragraph>
+        <Paragraph>Next, give the task queue a named schema and query it in [Record tables and queries](/copeland-ts/book/record-tables-and-queries/).</Paragraph>
     </Document>;
 }

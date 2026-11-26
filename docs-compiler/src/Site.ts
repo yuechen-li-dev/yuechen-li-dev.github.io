@@ -7,12 +7,15 @@ import { Book } from "./pages/book/Book";
 import { FirstProgram } from "./pages/book/FirstProgram";
 import { Values } from "./pages/book/Values";
 import { Records } from "./pages/book/Records";
+import { RecordTables } from "./pages/book/RecordTables";
 import { Enums } from "./pages/book/Enums";
 import { Fallibility } from "./pages/book/Fallibility";
+import { Classes } from "./pages/book/Classes";
 import { Modules } from "./pages/book/Modules";
 import { ScreenState } from "./pages/book/ScreenState";
 import { UiEvents } from "./pages/book/UiEvents";
 import { StaleResponses } from "./pages/book/StaleResponses";
+import { StateAndEffects } from "./pages/book/StateAndEffects";
 import { AsyncEstimates } from "./pages/book/AsyncEstimates";
 import { BatchEstimates } from "./pages/book/BatchEstimates";
 import { TypeRequirements } from "./pages/book/TypeRequirements";
@@ -32,9 +35,9 @@ import { UiPublishing } from "./pages/book/UiPublishing";
 import { Style } from "./Theme";
 
 export enum PageId {
-    Install, Author, Cli, BookIndex, FirstProgram, EditorSetup, Values, Records, Enums, Fallibility, Modules,
+    Install, Author, Cli, BookIndex, FirstProgram, EditorSetup, Values, Records, RecordTables, Enums, Fallibility, Classes, Modules,
     FirstView, InteractiveUi, UiLayout, UiComponents, UiForms, UiTesting, UiPublishing,
-    ScreenState, UiEvents, StaleResponses, AsyncEstimates, BatchEstimates,
+    ScreenState, UiEvents, StaleResponses, StateAndEffects, AsyncEstimates, BatchEstimates,
     TypeRequirements, GenericsTemplates, StaticEvaluation,
     NpmPackages, NugetPackages, PackageTargets,
 }
@@ -78,8 +81,10 @@ function Projects(): Project[] {
             { id: PageId.FirstProgram, slug: "first-program", part: "Getting started", title: "Your first program", summary: "Compile a Copeland module and run it in Node.", source: "" },
             { id: PageId.Values, slug: "values-and-functions", part: "Copeland TS basics", title: "Values and functions", summary: "Use explicit types to define and call a rule.", source: "" },
             { id: PageId.Records, slug: "records-and-collections", part: "Copeland TS basics", title: "Records and collections", summary: "Model tasks, update records, and build arrays.", source: "" },
+            { id: PageId.RecordTables, slug: "record-tables-and-queries", part: "Copeland TS basics", title: "Record tables and queries", summary: "Declare a typed table, filter and project its rows, and calculate totals.", source: "" },
             { id: PageId.Enums, slug: "enums-and-match", part: "Copeland TS basics", title: "Payload enums and match", summary: "Model alternatives and handle each case.", source: "" },
             { id: PageId.Fallibility, slug: "absence-and-failure", part: "Copeland TS basics", title: "Absence and failure", summary: "Use Option and Result to express distinct outcomes.", source: "" },
+            { id: PageId.Classes, slug: "classes", part: "Copeland TS basics", title: "Classes and immutable values", summary: "Validate construction and give a value its own update rules.", source: "" },
             { id: PageId.Modules, slug: "modules-and-testing", part: "Copeland TS basics", title: "Modules, targets, and testing", summary: "Organize code and test the target you ship.", source: "" },
             { id: PageId.FirstView, slug: "first-view", part: "Build a UI", title: "Render your first view", summary: "Build a TSX article panel and open it in the browser.", source: "" },
             { id: PageId.ScreenState, slug: "model-ui-state", part: "Build a UI", title: "Model a loading screen", summary: "Turn a TypeScript kind union into a payload enum and render every case.", source: "" },
@@ -90,6 +95,7 @@ function Projects(): Project[] {
             { id: PageId.UiForms, slug: "forms-and-accessibility", part: "Build a UI", title: "Add a search form", summary: "Validate search input and make the flow work with a keyboard.", source: "" },
             { id: PageId.AsyncEstimates, slug: "async-estimates", part: "Concurrency", title: "Wait for work with async and await", summary: "Load task estimates and handle a typed failure after awaiting the result.", source: "" },
             { id: PageId.StaleResponses, slug: "stale-ui-responses", part: "Concurrency", title: "Handle out-of-order responses", summary: "Track request identity so old responses cannot overwrite the current view.", source: "" },
+            { id: PageId.StateAndEffects, slug: "state-and-effects-with-flow", part: "Concurrency", title: "Model state and effects with flow", summary: "Declare the states a request can move through and let the host run its effects.", source: "" },
             { id: PageId.BatchEstimates, slug: "batch-estimates", part: "Concurrency", title: "Score independent items with batch", summary: "Apply the queue rule to an array and keep the results in input order.", source: "" },
             { id: PageId.UiTesting, slug: "test-your-ui", part: "Ship the UI", title: "Test the UI", summary: "Check state transitions and exercise the rendered screen in a browser.", source: "" },
             { id: PageId.UiPublishing, slug: "publish-your-ui", part: "Ship the UI", title: "Build and publish the UI", summary: "Serve the browser output from a clean static directory.", source: "" },
@@ -120,8 +126,10 @@ export function Content(id: PageId): Document {
         FirstProgram => FirstProgram(),
         Values => Values(),
         Records => Records(),
+        RecordTables => RecordTables(),
         Enums => Enums(),
         Fallibility => Fallibility(),
+        Classes => Classes(),
         Modules => Modules(),
         FirstView => FirstView(),
         ScreenState => ScreenState(),
@@ -133,6 +141,7 @@ export function Content(id: PageId): Document {
         UiTesting => UiTesting(),
         UiPublishing => UiPublishing(),
         StaleResponses => StaleResponses(),
+        StateAndEffects => StateAndEffects(),
         AsyncEstimates => AsyncEstimates(),
         BatchEstimates => BatchEstimates(),
         TypeRequirements => TypeRequirements(),

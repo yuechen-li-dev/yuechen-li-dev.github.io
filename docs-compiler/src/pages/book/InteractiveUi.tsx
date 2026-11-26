@@ -7,6 +7,7 @@ export function InteractiveUi(): Document {
 Browser event → application event → reducer → next model → view
 Request result → completion event → reducer → next model → view
         </CodeBlock>
+        <Paragraph>The browser handler routes a click to an application event. The reducer routes that event to a rule based on the current state. Those decisions answer different questions. A button can tell you what the reader chose. The reducer can tell you what the choice means even when the same event comes from a keyboard shortcut or a test. See [A reducer routes events](/copeland-ts/book/reduce-ui-events/#a-reducer-routes-events) for the equivalent TypeScript switch.</Paragraph>
         <Paragraph>Keep the model with the browser host between events. When a click arrives, read the current model at that moment, pass it to the reducer, and retain the returned value before rendering. A handler registered during page setup may run many times. If it closes over the initial model, every click starts again from that initial state.</Paragraph>
         <Paragraph>The browser host handles button events in `web/browser.mjs`. Both selection and retry start a new load, so both call `Select`. The host uses an article key to decide which article to load. The reducer assigns and tracks the request without needing the button, the browser event, or the article key.</Paragraph>
         <Heading level="2">Follow a selection through the page</Heading>
@@ -50,5 +51,6 @@ function Counter(): ReactNode {
         </CodeBlock>
         <Paragraph>`state` declares a retained value for one component instance. `on Increment()` defines a transition without a payload. The expression after the arrow computes its replacement record. This fragment leaves out the host attachment and event binding. To run it as a browser component, use a renderer and runtime that support Copeland component frames. The available transitions and effects depend on that target. See the [component state reference](https://github.com/yuechen-li-dev/Copeland/blob/e1a2773c830a1dbc2e68c7e06a7c32d13b593124/docs/Copeland/language/components.md) for the supported boundary.</Paragraph>
         <Paragraph>Continue to [Lay out and style the panel](/copeland-ts/book/layout-and-styling/) once selection and retry work. The panel can move on screen while the model and its transitions stay the same.</Paragraph>
+        <Paragraph>For a request with a lifecycle of its own, [Model state and effects with flow](/copeland-ts/book/state-and-effects-with-flow/) shows how to declare the legal transitions and deliver effect results from the host.</Paragraph>
     </Document>;
 }

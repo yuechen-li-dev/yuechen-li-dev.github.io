@@ -162,6 +162,6 @@ Preview only
             <Item><Paragraph>Use both when the two facts can vary independently. A store lookup might return `ok(None)` when it reached the store and found no matching row, `ok(Some(task))` when it found one, or `err(error)` when the store was unavailable. A caller could show an empty state for the first, render the task for the second, and offer a retry for the third.</Paragraph></Item>
         </List>
         <Paragraph>Try adding a third error case for names that exceed a length limit. Rebuild after adding the case and have a look at `obj/build.json`. The description of that error requires a new match arm. The propagation inside `QueueLabel` already passes along any value of the declared `NameError` type. Once you add the validation rule and a description, call the queue with a long name and check the rejection.</Paragraph>
-        <Paragraph>Next, take the queue into a larger project with [modules, targets, and testing](/copeland-ts/book/modules-and-testing/).</Paragraph>
+        <Paragraph>Next, use a Result to guard the creation of an immutable class value in [Classes and immutable values](/copeland-ts/book/classes/).</Paragraph>
     </Document>;
 }

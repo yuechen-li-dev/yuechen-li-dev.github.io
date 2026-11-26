@@ -46,7 +46,44 @@ layout RoomierReadingRoom<0px, 0px> = ReadingRoom with { root.gap: 24px; };
         <CodeBlock language="console">
 tscl layout inspect RoomierReadingRoom --source ReadingRoom.ts
         </CodeBlock>
-        <Paragraph>A contribution `stream` can supply content to named slots, and a layout binding connects that content to the layout. To run those bindings in a browser, configure a supported presentation target. The layout declaration describes geometry and style. The browser presentation is responsible for mounting content and choosing when to use each arrangement. See the [layout language guide](https://github.com/yuechen-li-dev/Copeland/blob/e1a2773c830a1dbc2e68c7e06a7c32d13b593124/docs/Copeland/language/layout.md) for how streams and bindings fit together.</Paragraph>
+        <Heading level="2">A stream gives each slot its content</Heading>
+        <Paragraph>A layout defines the named slots and their geometry. A contribution `stream` supplies the view for each name. The `list` slot in `ReadingRoom` tells the compiler how much space to reserve. The `list` entry in a stream tells it which view belongs in that space. The expression `bind ReadingRoom using Content` joins those declarations by slot name and returns a renderable view.</Paragraph>
+        <Paragraph>Suppose the reading room also has a narrow arrangement. Add a column layout with the same `list` and `detail` slots. In a workspace configured with `CopelandViews` and a stateless presentation adapter, the same content can go into either layout.</Paragraph>
+        <CodeBlock language="copeland-fragment">
+layout CompactReadingRoom<0px, 0px> {
+    width: 320px;
+    height: 360px;
+    column root {
+        gap: 12px;
+        slot list { height: 72px; }
+        slot detail { height: fill; }
+    }
+}
+
+export function ReadingView(title: string, narrow: boolean): View {
+    stream Content {
+        list: <aside>Choose an article</aside>;
+        detail: <article><h2>{title}</h2></article>;
+    }
+    if (narrow) {
+        return bind CompactReadingRoom using Content;
+    }
+    return bind ReadingRoom using Content;
+}
+        </CodeBlock>
+        <Paragraph>Read this as three steps. Each call to `ReadingView` constructs the two contributions once. The `if` selects an arrangement. The bind expression places those already constructed values in that layout’s slots. The layout determines presentation order. You can rearrange the slots without editing the content or passing generated class names through the views.</Paragraph>
+        <Paragraph>This is the wiring the compiler handles for you. It checks that every slot has exactly one renderable contribution, then builds the layout hosts and connects each contribution to its host through the chosen presentation adapter. Rename `detail` to `details` in the stream and the compiler can point out that the layout still expects `detail`. The author chooses the semantic elements such as `aside` and `article`, and the caller supplies the `narrow` decision.</Paragraph>
+        <Heading level="2">Declare placement and content together</Heading>
+        <Paragraph>When one arrangement and its content always go together, give the stream an origin and put both in the same declaration. Each named entry supplies a view and the geometry for its slot. A flat body arranges the entries in a column.</Paragraph>
+        <CodeBlock language="copeland-fragment">
+stream ReadingColumn<0px, 0px> {
+    width: 320px;
+    height: 360px;
+    list: <aside>Choose an article</aside> { height: 72px; }
+    detail: <article>Article details</article> { height: fill; }
+}
+        </CodeBlock>
+        <Paragraph>The compiler works out the layout and bindings from that one declaration. Call `ReadingColumnStream()` for the composed view. Use a separate `layout` and contribution `stream` when you want to put the same content in several arrangements. Both forms need a supported presentation target. The book’s article-panel demo uses the CSS grid above. See the [layout language guide](https://github.com/yuechen-li-dev/Copeland/blob/e1a2773c830a1dbc2e68c7e06a7c32d13b593124/docs/Copeland/language/layout.md).</Paragraph>
         <Heading level="2">Check the layout with real content</Heading>
         <List>
             <Item><Paragraph>At a wide viewport, select **Patterns in UI**. Verify that both regions are visible and the detail area fills the space beside the list.</Paragraph></Item>
